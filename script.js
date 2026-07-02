@@ -100,6 +100,7 @@ const state = {
     },
     custom: {
         selectedIds: new Set(),
+        manualSelectedIds: new Set(),
         pool: [],
         selectedTeams: [],
         groups: [],
@@ -113,6 +114,7 @@ const state = {
     },
     championsleague: {
         selectedIds: new Set(),
+        manualSelectedIds: new Set(),
         pool: [],
         selectedTeams: [],
         groups: [],
@@ -126,6 +128,7 @@ const state = {
     },
     worldCup: {
         selectedIds: new Set(),
+        manualSelectedIds: new Set(),
         pool: [],
         selectedTeams: [],
         groups: [],
@@ -146,6 +149,120 @@ function shuffle(array) {
         [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
+}
+
+function getEffectiveStrength(team) {
+    const baseStrength = Number(team?.strength);
+
+    if (Number.isFinite(baseStrength) && baseStrength > 0) {
+        return Math.max(1, Math.round(baseStrength));
+    }
+
+    return 50;
+}
+
+function renderTeamLabel(team, options = {}) {
+    const { mode = null, highlight = false } = options;
+    const isTeamObject = team && typeof team === 'object';
+    const teamId = isTeamObject ? team.id : null;
+    const teamName = isTeamObject ? team.name : team || '';
+    const isHighlighted = Boolean(highlight || (mode && state[mode]?.manualSelectedIds?.has(teamId)));
+    const imageMarkup = isTeamObject && team.image
+        ? `<img src="${team.image}" alt="${teamName}" class="team-avatar" />`
+        : '';
+
+    return `
+        <span class="team-label">
+            ${imageMarkup}
+            <span class="team-name${isHighlighted ? ' team-name--selected' : ''}">${teamName}</span>
+        </span>
+    `;
+}
+
+function getTournamentTeamsForStats(mode) {
+    const tournament = state[mode];
+    const tracked = new Map();
+
+    const addTeam = team => {
+        if (!team?.id) return;
+        if (!tracked.has(team.id)) {
+            tracked.set(team.id, team);
+        }
+    };
+
+    if (tournament?.groups?.length) {
+        tournament.groups.flatMap(group => group.teams || []).forEach(addTeam);
+    }
+
+    (tournament?.knockout?.matches || []).forEach(match => {
+        addTeam(match.teamA);
+        addTeam(match.teamB);
+        addTeam(match.winner);
+    });
+
+    (tournament?.live?.matches || []).forEach(match => {
+        addTeam(match.teamA);
+        addTeam(match.teamB);
+        addTeam(match.winner);
+    });
+
+    if (tracked.size) {
+        return Array.from(tracked.values());
+    }
+
+    if (tournament?.selectedTeams?.length) {
+        return tournament.selectedTeams;
+    }
+    return [];
+}
+
+function renderTournamentStats(mode, expanded = false) {
+    const teams = getTournamentTeamsForStats(mode);
+    if (!teams.length) return '';
+
+    const sortedTeams = [...teams].sort((a, b) => {
+        const goalsDiff = (b.goalsFor || 0) - (a.goalsFor || 0);
+        if (goalsDiff !== 0) return goalsDiff;
+        return (a.goalsAgainst || 0) - (b.goalsAgainst || 0);
+    });
+
+    const rows = sortedTeams.map(team => `
+        <tr>
+            <td>${renderTeamLabel(team, { mode })}</td>
+            <td>${team.goalsFor || 0}</td>
+            <td>${team.goalsAgainst || 0}</td>
+            ${expanded ? `<td>${team.goalsFor - team.goalsAgainst}</td>` : ''}
+            ${expanded ? `<td>${team.points || 0}</td>` : ''}
+        </tr>
+    `).join('');
+
+    const columns = expanded
+        ? '<th>GP</th><th>GC</th><th>SG</th><th>PTS</th>'
+        : '<th>GP</th><th>GC</th>';
+
+    return `
+        <section class="card section-panel stats-panel">
+            <div class="title-group">
+                <div>
+                    <h3>${expanded ? 'Estatísticas do campeonato' : 'Gols do campeonato'}</h3>
+                    <p class="description">Atualiza em tempo real durante a fase de grupos e mata-mata.</p>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Gols</th>
+                            <th>Tomados</th>
+                            ${expanded ? '<th>Saldo</th><th>Pts</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        </section>
+    `;
 }
 
 function renderMainScreen() {
@@ -196,6 +313,7 @@ function handleLeagueChoice(key) {
 function setupTournamentSelection(mode) {
     const tournament = state[mode];
     tournament.selectedIds.clear();
+    tournament.manualSelectedIds = new Set();
     tournament.selectedTeams = [];
     tournament.pool = mode === 'libertadores'
         ? buildLibertadoresPool()
@@ -277,10 +395,12 @@ function renderTournamentSelection(mode) {
     const sections = Object.entries(groups).map(([leagueKey, group]) => {
         const items = group.teams.map(team => {
             const selected = tournament.selectedIds.has(team.id);
+            const highlighted = tournament.manualSelectedIds.has(team.id);
             return `
-                <label class="team-card">
-                    <span>${team.name}</span>
+                <label class="team-card${highlighted ? ' team-card--selected' : ''}">
+                    ${renderTeamLabel(team)}
                     <input type="checkbox" data-id="${team.id}" ${selected ? 'checked' : ''} />
+                    <span class="custom-checkbox" aria-hidden="true"></span>
                 </label>
             `;
         }).join('');
@@ -339,8 +459,10 @@ function renderTournamentSelection(mode) {
                     return;
                 }
                 tournament.selectedIds.add(id);
+                tournament.manualSelectedIds.add(id);
             } else {
                 tournament.selectedIds.delete(id);
+                tournament.manualSelectedIds.delete(id);
             }
             renderTournamentSelection(mode);
         });
@@ -400,7 +522,8 @@ function createChampionshipTeams(teams) {
     return teams.map(team => ({
         id: `${team.name}-${team.nation || team.country}`,
         name: team.name,
-        strength: team.strength || 50, 
+        image: team.image,
+        strength: getEffectiveStrength(team),
         country: team.nation || team.country,
         played: 0,
         wins: 0,
@@ -497,8 +620,8 @@ function updateTeamStats(team, forGoals, againstGoals) {
 
 // CORREÇÃO AQUI: Forçando valor default caso team.strength chegue vazio
 function getGoals(teamA, teamB) {
-    const strengthA = Math.max(1, teamA.strength || 50);
-    const strengthB = Math.max(1, teamB.strength || 50);
+    const strengthA = Math.max(1, getEffectiveStrength(teamA));
+    const strengthB = Math.max(1, getEffectiveStrength(teamB));
     const diff = strengthA - strengthB;
     
     const averageA = Math.max(0.2, 1.2 + (diff / 25) + (Math.random() * 0.4 - 0.2));
@@ -537,7 +660,7 @@ function renderLeagueStandings() {
     const rows = sorted.map((team, index) => `
         <tr>
             <td>${index + 1}</td>
-            <td>${team.name}</td>
+            <td>${renderTeamLabel(team)}</td>
             <td>${team.points}</td>
             <td>${team.played}</td>
             <td>${team.wins}</td>
@@ -610,6 +733,7 @@ function renderLeagueSimulator(key) {
 
 function setupLibertadoresSelection() {
     state.libertadores.selectedIds.clear();
+    state.libertadores.manualSelectedIds = new Set();
     state.libertadores.selectedTeams = [];
     state.libertadores.pool = buildLibertadoresPool();
     state.libertadores.groupRound = 0;
@@ -647,10 +771,12 @@ function renderLibertadoresSelection() {
     const sections = Object.keys(groups).map(label => {
         const items = groups[label].map(team => {
             const selected = state.libertadores.selectedIds.has(team.id);
+            const highlighted = state.libertadores.manualSelectedIds.has(team.id);
             return `
-                <label class="team-card">
-                    <span>${team.name}</span>
+                <label class="team-card${highlighted ? ' team-card--selected' : ''}">
+                    ${renderTeamLabel(team)}
                     <input type="checkbox" data-id="${team.id}" ${selected ? 'checked' : ''} />
+                    <span class="custom-checkbox" aria-hidden="true"></span>
                 </label>
             `;
         }).join('');
@@ -707,8 +833,10 @@ function renderLibertadoresSelection() {
                     return;
                 }
                 state.libertadores.selectedIds.add(id);
+                state.libertadores.manualSelectedIds.add(id);
             } else {
                 state.libertadores.selectedIds.delete(id);
+                state.libertadores.manualSelectedIds.delete(id);
             }
             renderLibertadoresSelection();
         });
@@ -762,7 +890,7 @@ function startTournamentGroupStage(mode) {
             name: String.fromCharCode(65 + index),
             teams: shuffled.slice(index * teamsPerGroup, index * teamsPerGroup + teamsPerGroup).map(team => ({
                 ...team,
-                strength: team.strength || 50, // Adicionado segurança aqui também
+                strength: getEffectiveStrength(team),
                 played: 0,
                 wins: 0,
                 draws: 0,
@@ -804,7 +932,7 @@ function renderTournamentGroupStage(mode) {
         const rows = getGroupStandings(group).map(team => `
             <tr>
                 <td>${team.position}</td>
-                <td>${team.name}</td>
+                <td>${renderTeamLabel(team)}</td>
                 <td>${team.points}</td>
                 <td>${team.played}</td>
                 <td>${team.wins}</td>
@@ -818,19 +946,28 @@ function renderTournamentGroupStage(mode) {
         return `
             <div class="group-table card">
                 <h3>Grupo ${group.name}</h3>
-                <table>
-                    <thead>
-                        <tr><th>#</th><th>Time</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th></tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>#</th><th>Time</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
             </div>
         `;
     }).join('');
 
-    const historyRows = tournament.groupHistory.map(match => {
-        return `<div class="match-item"><span>${match.group}</span><span>${match.teamA} ${match.goalsA} x ${match.goalsB} ${match.teamB}</span><span>${match.round}</span></div>`;
-    }).join('') || '<div class="alert-box">Nenhuma rodada simulada ainda.</div>';
+    const historyRows = tournament.groupHistory.length
+        ? tournament.groupHistory.map(match => `
+            <tr>
+                <td>${match.group}</td>
+                <td>${match.round}</td>
+                <td>${renderTeamLabel(match.teamA, { mode })} <strong>x</strong> ${renderTeamLabel(match.teamB, { mode })}</td>
+                <td>${match.goalsA} x ${match.goalsB}</td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="4"><div class="alert-box">Nenhuma rodada simulada ainda.</div></td></tr>';
 
     const maxRounds = getMaxGroupRounds(mode);
     const canAdvance = tournament.groupRound < maxRounds;
@@ -860,9 +997,22 @@ function renderTournamentGroupStage(mode) {
         </section>
         <section class="group-grid">${groupsHtml}</section>
         <section class="card section-panel">
-            <h3>Historico de jogos</h3>
-            <div class="match-history">${historyRows}</div>
+            <h3>Histórico de jogos</h3>
+            <div class="table-wrapper">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Grupo</th>
+                            <th>Rodada</th>
+                            <th>Partida</th>
+                            <th>Placar</th>
+                        </tr>
+                    </thead>
+                    <tbody>${historyRows}</tbody>
+                </table>
+            </div>
         </section>
+        ${renderTournamentStats(mode, false)}
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
@@ -924,8 +1074,8 @@ function advanceTournamentGroupRound(mode) {
             tournament.groupHistory.unshift({
                 group: group.name,
                 round: `R${currentRound + 1}`,
-                teamA: match.teamA.name,
-                teamB: match.teamB.name,
+                teamA: match.teamA,
+                teamB: match.teamB,
                 goalsA,
                 goalsB
             });
@@ -999,7 +1149,7 @@ function renderKnockoutStage(mode) {
                 penaltyButton = renderPenaltyInterface(match);
             }
         }
-        return `<div class="match-item"><span>${match.teamA.name}</span><span>${score}</span><span>${match.teamB.name}</span>${result}${penaltyButton}</div>`;
+        return `<div class="match-item"><span>${renderTeamLabel(match.teamA, { mode })}</span><span>${score}</span><span>${renderTeamLabel(match.teamB, { mode })}</span>${result}${penaltyButton}</div>`;
     }).join('');
 
     const simulateLabel = knockout.stage === stages.dezesseisavos
@@ -1038,6 +1188,7 @@ function renderKnockoutStage(mode) {
             </div>
         </section>
         <section class="knockout-list section-panel">${matchRows}</section>
+        ${renderTournamentStats(mode, false)}
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
@@ -1094,6 +1245,8 @@ function simulateKnockoutStage(mode) {
         const [goalsA, goalsB] = getGoals(match.teamA, match.teamB);
         match.goalsA = goalsA;
         match.goalsB = goalsB;
+        updateTeamStats(match.teamA, goalsA, goalsB);
+        updateTeamStats(match.teamB, goalsB, goalsA);
         if (goalsA !== goalsB) {
             match.winner = goalsA > goalsB ? match.teamA : match.teamB;
         } else {
@@ -1277,7 +1430,7 @@ function renderLiveKnockoutStage(mode) {
                 penaltyPart = renderPenaltyInterface(match, mode, match._idx, true);
             }
         }
-        return `<div class="match-item"><span>${match.teamA.name}</span><span>${score}</span><span>${match.teamB.name}</span>${result}${penaltyPart}</div>`;
+        return `<div class="match-item"><span>${renderTeamLabel(match.teamA, { mode })}</span><span>${score}</span><span>${renderTeamLabel(match.teamB, { mode })}</span>${result}${penaltyPart}</div>`;
     }).join('');
 
     const historyRows = tournament.live.history.length ? tournament.live.history.map(event => `<div class="match-item"><span>${event.minute}'</span><span>${event.message}</span><span></span></div>`).join('') : '<div class="alert-box">Nenhum evento ainda.</div>';
@@ -1309,6 +1462,7 @@ function renderLiveKnockoutStage(mode) {
             <h3>Histórico de gols</h3>
             <div class="match-history">${historyRows}</div>
         </section>
+        ${renderTournamentStats(mode, false)}
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
@@ -1392,10 +1546,14 @@ function startLiveMatch(mode) {
             
             if (Math.random() < chanceA) {
                 match.goalsA += 1;
+                updateTeamStats(match.teamA, 1, 0);
+                updateTeamStats(match.teamB, 0, 1);
                 tournament.live.history.unshift({ minute: tournament.live.minute, message: `${match.teamA.name} marcou!` });
             }
             if (Math.random() < chanceB) {
                 match.goalsB += 1;
+                updateTeamStats(match.teamB, 1, 0);
+                updateTeamStats(match.teamA, 0, 1);
                 tournament.live.history.unshift({ minute: tournament.live.minute, message: `${match.teamB.name} marcou!` });
             }
         });
@@ -1415,7 +1573,7 @@ function startLiveMatch(mode) {
     }, 1000);
 }
 
-function renderPenaltyInterface(match) {
+function renderPenaltyInterface(match, mode = match._mode) {
     if (!match.penalties) return '';
     const penalties = match.penalties;
     const scoreA = penalties.attemptsA.filter(Boolean).length;
@@ -1433,8 +1591,8 @@ function renderPenaltyInterface(match) {
             
     return `
         <div class="penalty-panel">
-            <div class="penalty-row"><span>${match.teamA.name}</span><span class="penalty-circles">${roundsA}</span></div>
-            <div class="penalty-row"><span>${match.teamB.name}</span><span class="penalty-circles">${roundsB}</span></div>
+            <div class="penalty-row"><span>${renderTeamLabel(match.teamA, { mode })}</span><span class="penalty-circles">${roundsA}</span></div>
+            <div class="penalty-row"><span>${renderTeamLabel(match.teamB, { mode })}</span><span class="penalty-circles">${roundsB}</span></div>
             <div class="penalty-row"><span>Placar</span><span class="penalty-circles">${scoreA} x ${scoreB}</span></div>
             ${status}
             <div style="margin-top: 10px;">${buttonHtml}</div>
@@ -1453,10 +1611,11 @@ function renderChampionScreen(mode) {
                 <button id="backButton" class="secondary">Voltar ao menu</button>
             </div>
             <div class="section-panel">
-                <h3>${state[mode].champion?.name || 'Ainda sem campeão'}</h3>
+                <h3>${state[mode].champion ? renderTeamLabel(state[mode].champion, { mode }) : 'Ainda sem campeão'}</h3>
                 <p class="description">Parabens ao time que venceu a final.</p>
             </div>
         </section>
+        ${renderTournamentStats(mode, true)}
     `;
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
 }
