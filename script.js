@@ -932,7 +932,7 @@ function renderTournamentGroupStage(mode) {
         const rows = getGroupStandings(group).map(team => `
             <tr>
                 <td>${team.position}</td>
-                <td>${renderTeamLabel(team)}</td>
+                <td>${renderTeamLabel(team, { mode })}</td>
                 <td>${team.points}</td>
                 <td>${team.played}</td>
                 <td>${team.wins}</td>
@@ -1053,7 +1053,10 @@ function getGroupStandings(group) {
         if (gdB !== gdA) return gdB - gdA;
         return b.goalsFor - a.goalsFor;
     });
-    return sorted.map((team, index) => ({ position: index + 1, ...team }));
+    return sorted.map((team, index) => {
+        team.position = index + 1;
+        return team;
+    });
 }
 
 function advanceTournamentGroupRound(mode) {
