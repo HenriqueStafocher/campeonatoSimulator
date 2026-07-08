@@ -275,6 +275,17 @@ button.success {
     text-align: center;
 }
 
+.score-badge {
+    background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(6, 214, 160, 0.1)) !important;
+    padding: 10px 14px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    color: #3a86ff !important;
+    border: 1px solid rgba(58, 134, 255, 0.3) !important;
+    min-width: 70px !important;
+}
+
 .group-grid {
     display: grid;
     gap: 16px;
@@ -484,22 +495,56 @@ table.stats-table tr + tr td {
 }
 
 @keyframes pulseTime {
-    0%, 100% {
-        transform: scale(1);
+    0% {
+        transform: scale(1) translateY(0);
         color: #fff;
         text-shadow: 0 0 0 rgba(255, 214, 10, 0);
     }
-    50% {
-        transform: scale(1.08);
+    25% {
+        transform: scale(1.12) translateY(-2px);
         color: #ffd60a;
-        text-shadow: 0 0 12px rgba(255, 214, 10, 0.6);
+        text-shadow: 0 0 8px rgba(255, 214, 10, 0.4);
+    }
+    50% {
+        transform: scale(1.15) translateY(0);
+        color: #ffd60a;
+        text-shadow: 0 0 16px rgba(255, 214, 10, 0.8);
+    }
+    75% {
+        transform: scale(1.12) translateY(-2px);
+        color: #ffd60a;
+        text-shadow: 0 0 8px rgba(255, 214, 10, 0.4);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        color: #fff;
+        text-shadow: 0 0 0 rgba(255, 214, 10, 0);
     }
 }
 
 .status-line span:first-child strong {
-    animation: pulseTime 0.8s ease-in-out infinite;
+    animation: pulseTime 1s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
     display: inline-block;
     font-weight: 900;
+    min-width: 40px;
+}
+
+@keyframes minuteGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 214, 10, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 214, 10, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 214, 10, 0);
+    }
+}
+
+.status-line span:first-child {
+    animation: minuteGlow 1.5s ease-out infinite;
+    padding: 8px 12px;
+    border-radius: 8px;
 }
 
 .penalty-panel {
@@ -531,4 +576,242 @@ table.stats-table tr + tr td {
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.08);
     color: var(--muted);
+}
+
+/* Responsividade para tabela de gols no mobile */
+@media (max-width: 600px) {
+    .stats-panel {
+        max-height: none;
+        padding: 14px 12px;
+    }
+
+    .stats-panel .table-wrapper {
+        overflow-x: hidden;
+        overflow-y: visible;
+        margin-top: 12px;
+    }
+
+    table.stats-table {
+        min-width: 100%;
+        display: block;
+    }
+
+    table.stats-table thead {
+        display: none;
+    }
+
+    table.stats-table tbody {
+        display: block;
+    }
+
+    table.stats-table tr {
+        display: block;
+        margin-bottom: 14px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 14px;
+        padding: 12px;
+        border-top: none !important;
+    }
+
+    table.stats-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.9rem;
+    }
+
+    table.stats-table td:first-child {
+        border-top: none;
+    }
+
+    table.stats-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.85rem;
+        flex: 0 0 40%;
+    }
+
+    /* Saldo de gols destacado */
+    table.stats-table tr > td:nth-child(4) {
+        background: rgba(6, 214, 160, 0.12);
+        padding: 10px;
+        margin: 8px -12px -8px -12px;
+        border-radius: 10px;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    table.stats-table tr > td:nth-child(4)::before {
+        display: none;
+    }
+
+    /* Tabela de história de jogos responsiva */
+    table.history-table {
+        min-width: 100%;
+        display: block;
+    }
+
+    table.history-table thead {
+        display: none;
+    }
+
+    table.history-table tbody {
+        display: block;
+    }
+
+    table.history-table tr {
+        display: block;
+        margin-bottom: 12px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 12px;
+        border-top: none !important;
+    }
+
+    table.history-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.9rem;
+    }
+
+    table.history-table td:first-child {
+        border-top: none;
+    }
+
+    table.history-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.85rem;
+        flex: 0 0 35%;
+    }
+
+    /* Placar destacado */
+    table.history-table tr > td:nth-child(4) {
+        background: rgba(58, 134, 255, 0.12);
+        padding: 10px;
+        margin: 8px -12px -8px -12px;
+        border-radius: 10px;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #3a86ff;
+    }
+
+    table.history-table tr > td:nth-child(4)::before {
+        display: none;
+    }
+
+    /* Tabela de standings também responsiva */
+    table.standings {
+        min-width: 100%;
+        display: block;
+    }
+
+    table.standings thead {
+        display: none;
+    }
+
+    table.standings tbody {
+        display: block;
+    }
+
+    table.standings tr {
+        display: block;
+        margin-bottom: 14px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 14px;
+        padding: 12px;
+        border-top: none !important;
+    }
+
+    table.standings td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.9rem;
+    }
+
+    table.standings td:first-child {
+        border-top: none;
+    }
+
+    table.standings td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.85rem;
+        flex: 0 0 45%;
+    }
+
+    /* Saldo de gols destacado na tabela de standings */
+    table.standings tr > td:nth-child(10) {
+        background: rgba(6, 214, 160, 0.12);
+        padding: 10px;
+        margin: 8px -12px -8px -12px;
+        border-radius: 10px;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    table.standings tr > td:nth-child(10)::before {
+        display: none;
+    }
+}
+
+@keyframes goalPulse {
+    0% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.08) translateY(-4px);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 0.8;
+    }
+}
+
+.match-history .match-item {
+    animation: goalPulse 0.8s ease-out;
+}
+
+@keyframes scoreFlash {
+    0% {
+        background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(6, 214, 160, 0.1));
+        transform: scale(1);
+    }
+    50% {
+        background: linear-gradient(135deg, rgba(58, 134, 255, 0.4), rgba(6, 214, 160, 0.2));
+        transform: scale(1.05);
+    }
+    100% {
+        background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(6, 214, 160, 0.1));
+        transform: scale(1);
+    }
+}
+
+.match-item .score-badge {
+    transition: all 0.3s ease;
+}
+
+.knockout-list .match-item:has(.score-badge:not(:contains("A definir"))) .score-badge {
+    animation: scoreFlash 0.8s ease-out 1;
 }

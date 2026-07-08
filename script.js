@@ -228,11 +228,11 @@ function renderTournamentStats(mode, expanded = false) {
 
     const rows = sortedTeams.map(team => `
         <tr>
-            <td>${renderTeamLabel(team, { mode })}</td>
-            <td>${team.goalsFor || 0}</td>
-            <td>${team.goalsAgainst || 0}</td>
-            ${expanded ? `<td>${team.goalsFor - team.goalsAgainst}</td>` : ''}
-            ${expanded ? `<td>${team.points || 0}</td>` : ''}
+            <td data-label="Time">${renderTeamLabel(team, { mode })}</td>
+            <td data-label="GP">${team.goalsFor || 0}</td>
+            <td data-label="GC">${team.goalsAgainst || 0}</td>
+            ${expanded ? `<td data-label="SG">${team.goalsFor - team.goalsAgainst}</td>` : ''}
+            ${expanded ? `<td data-label="PTS">${team.points || 0}</td>` : ''}
         </tr>
     `).join('');
 
@@ -659,16 +659,16 @@ function renderLeagueStandings() {
 
     const rows = sorted.map((team, index) => `
         <tr>
-            <td>${index + 1}</td>
-            <td>${renderTeamLabel(team)}</td>
-            <td>${team.points}</td>
-            <td>${team.played}</td>
-            <td>${team.wins}</td>
-            <td>${team.draws}</td>
-            <td>${team.losses}</td>
-            <td>${team.goalsFor}</td>
-            <td>${team.goalsAgainst}</td>
-            <td>${team.goalsFor - team.goalsAgainst}</td>
+            <td data-label="#">${index + 1}</td>
+            <td data-label="Time">${renderTeamLabel(team)}</td>
+            <td data-label="PTS">${team.points}</td>
+            <td data-label="J">${team.played}</td>
+            <td data-label="V">${team.wins}</td>
+            <td data-label="E">${team.draws}</td>
+            <td data-label="D">${team.losses}</td>
+            <td data-label="GP">${team.goalsFor}</td>
+            <td data-label="GC">${team.goalsAgainst}</td>
+            <td data-label="SG">${team.goalsFor - team.goalsAgainst}</td>
         </tr>
     `).join('');
 
@@ -720,6 +720,7 @@ function renderLeagueSimulator(key) {
                 <button id="simulateAll" class="success">Simular campeonato</button>
             </div>
             <div id="leagueSummary"></div>
+            <div id="leagueMatches"></div>
             <div id="leagueTable"></div>
         </section>
     `;
@@ -728,7 +729,47 @@ function renderLeagueSimulator(key) {
     document.getElementById('simulateRound').addEventListener('click', simulateLeagueRound);
     document.getElementById('simulateAll').addEventListener('click', simulateLeagueAll);
     renderLeagueStatus();
+    renderLeagueMatches();
     renderLeagueStandings();
+}
+
+function renderLeagueMatches() {
+    const target = document.getElementById('leagueMatches');
+    if (!target) return;
+    
+    if (state.currentRound === 0) {
+        target.innerHTML = '';
+        return;
+    }
+
+    const matchesByRound = {};
+    for (let round = 0; round < state.currentRound; round++) {
+        matchesByRound[round] = state.schedule[round] || [];
+    }
+
+    let matchesHtml = '';
+    Object.entries(matchesByRound).forEach(([round, matches]) => {
+        const matchRows = matches.map(match => {
+            const score = match.goalsA !== null ? `${match.goalsA} x ${match.goalsB}` : '-';
+            return `<div class="match-item"><span>${renderTeamLabel(match.teamA)}</span><span class="score-badge">${score}</span><span>${renderTeamLabel(match.teamB)}</span></div>`;
+        }).join('');
+        
+        matchesHtml += `
+            <div style="margin-top: 16px;">
+                <h4 style="color: var(--muted); font-size: 0.95rem; margin: 0 0 10px 0;">Rodada ${Number(round) + 1}</h4>
+                <div style="display: grid; gap: 10px;">${matchRows}</div>
+            </div>
+        `;
+    });
+
+    target.innerHTML = `
+        <section class="card section-panel">
+            <h3>Placares dos jogos simulados</h3>
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+                ${matchesHtml}
+            </div>
+        </section>
+    `;
 }
 
 function setupLibertadoresSelection() {
@@ -961,10 +1002,10 @@ function renderTournamentGroupStage(mode) {
     const historyRows = tournament.groupHistory.length
         ? tournament.groupHistory.map(match => `
             <tr>
-                <td>${match.group}</td>
-                <td>${match.round}</td>
-                <td>${renderTeamLabel(match.teamA, { mode })} <strong>x</strong> ${renderTeamLabel(match.teamB, { mode })}</td>
-                <td>${match.goalsA} x ${match.goalsB}</td>
+                <td data-label="Grupo">${match.group}</td>
+                <td data-label="Rodada">${match.round}</td>
+                <td data-label="Partida">${renderTeamLabel(match.teamA, { mode })} <strong>x</strong> ${renderTeamLabel(match.teamB, { mode })}</td>
+                <td data-label="Placar">${match.goalsA} x ${match.goalsB}</td>
             </tr>
         `).join('')
         : '<tr><td colspan="4"><div class="alert-box">Nenhuma rodada simulada ainda.</div></td></tr>';
