@@ -32,6 +32,7 @@ const StorageManager = {
         }
     }
 };
+
 const leagueButtons = [
     { key: 'custom', label: 'Personalizado', special: 'custom' },
     { key: 'worldCup', label: 'Copa do Mundo', special: 'worldCup' },
@@ -235,10 +236,6 @@ function renderTournamentStats(mode, expanded = false) {
             ${expanded ? `<td data-label="PTS">${team.points || 0}</td>` : ''}
         </tr>
     `).join('');
-
-    const columns = expanded
-        ? '<th>GP</th><th>GC</th><th>SG</th><th>PTS</th>'
-        : '<th>GP</th><th>GC</th>';
 
     return `
         <section class="card section-panel stats-panel">
@@ -489,6 +486,7 @@ function renderSimpleSpecial(title, description) {
     state.leagueTeams = createChampionshipTeams(league.teams);
     state.schedule = buildSchedule(state.leagueTeams);
     state.currentRound = 0;
+    
     app.innerHTML = `
         <section class="card">
             <div class="title-group">
@@ -501,11 +499,21 @@ function renderSimpleSpecial(title, description) {
                 <span>Rodada atual: <strong>0 / ${state.schedule.length}</strong></span>
                 <button id="backButton" class="secondary">Voltar ao menu</button>
             </div>
-            <div class="section-panel">
+            
+            <div class="section-panel" style="position: relative; z-index: 10;">
                 <button id="simulateRound" class="success">Simular rodada</button>
                 <button id="simulateAll" class="success">Simular campeonato</button>
             </div>
+            
             <div id="leagueSummary" class="section-panel"></div>
+
+            <div style="text-align: center; margin: 15px 0;">
+                <button id="toggleScoresBtn" class="secondary" style="display: none;">Placares</button>
+            </div>
+            <div id="latestScoresWrapper" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease-in-out;">
+                <div id="latestScoresContent"></div>
+            </div>
+
             <div id="leagueTable" class="table-wrapper section-panel"></div>
         </section>
     `;
@@ -513,11 +521,13 @@ function renderSimpleSpecial(title, description) {
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
     document.getElementById('simulateRound').addEventListener('click', simulateLeagueRound);
     document.getElementById('simulateAll').addEventListener('click', simulateLeagueAll);
+    document.getElementById('toggleScoresBtn').addEventListener('click', toggleScoresPanel);
+    
     renderLeagueStatus();
+    updateScoresPanel();
     renderLeagueStandings();
 }
 
-// CORREÇÃO AQUI: Garantindo que todos os times tenham um strength válido (fallback de 50)
 function createChampionshipTeams(teams) {
     return teams.map(team => ({
         id: `${team.name}-${team.nation || team.country}`,
@@ -557,7 +567,6 @@ function buildSchedule(teams) {
         }
         firstHalf.push(roundMatches);
         
-        // CORREÇÃO AQUI: Método mais seguro para rotacionar os times e evitar bugs no JS
         const last = rotating.pop();
         rotating.unshift(last);
     }
@@ -580,7 +589,9 @@ function simulateLeagueRound() {
     }
     state.schedule[state.currentRound].forEach(match => simulateMatch(match));
     state.currentRound += 1;
+    
     renderLeagueStatus();
+    updateScoresPanel();
     renderLeagueStandings();
 }
 
@@ -589,6 +600,7 @@ function simulateLeagueAll() {
         state.schedule[state.currentRound].forEach(match => simulateMatch(match));
     }
     renderLeagueStatus();
+    updateScoresPanel();
     renderLeagueStandings();
 }
 
@@ -618,7 +630,6 @@ function updateTeamStats(team, forGoals, againstGoals) {
     }
 }
 
-// CORREÇÃO AQUI: Forçando valor default caso team.strength chegue vazio
 function getGoals(teamA, teamB) {
     const strengthA = Math.max(1, getEffectiveStrength(teamA));
     const strengthB = Math.max(1, getEffectiveStrength(teamB));
@@ -644,6 +655,56 @@ function renderLeagueStatus() {
             </div>
         </div>
     `;
+}
+
+// NOVO: Gerencia a renderização dos placares apenas da última rodada simulada
+function updateScoresPanel() {
+    const toggleBtn = document.getElementById('toggleScoresBtn');
+    const wrapper = document.getElementById('latestScoresWrapper');
+    const content = document.getElementById('latestScoresContent');
+
+    if (!toggleBtn || !wrapper || !content) return;
+
+    if (state.currentRound === 0) {
+        toggleBtn.style.display = 'none';
+        content.innerHTML = '';
+        wrapper.style.maxHeight = '0px';
+        return;
+    }
+
+    // Mostra o botão a partir da 1ª rodada
+    toggleBtn.style.display = 'inline-block';
+
+    const lastRoundIndex = state.currentRound - 1;
+    const matches = state.schedule[lastRoundIndex];
+
+    const matchRows = matches.map(match => {
+        const score = match.goalsA !== null ? `${match.goalsA} x ${match.goalsB}` : '-';
+        return `<div class="match-item"><span>${renderTeamLabel(match.teamA)}</span><span class="score-badge">${score}</span><span>${renderTeamLabel(match.teamB)}</span></div>`;
+    }).join('');
+
+    content.innerHTML = `
+        <div class="card section-panel" style="margin-bottom: 20px; padding: 15px;">
+            <h4 style="text-align: center; color: var(--muted, #888); margin: 0 0 15px 0;">Referente à Rodada ${state.currentRound}</h4>
+            <div style="display: grid; gap: 10px;">${matchRows}</div>
+        </div>
+    `;
+
+    // Garante que a lista volte a fechar ao gerar uma nova simulação (esperando o clique)
+    wrapper.style.maxHeight = '0px';
+}
+
+// NOVO: Função responsável por abrir e fechar a lista com animação suave
+function toggleScoresPanel() {
+    const wrapper = document.getElementById('latestScoresWrapper');
+    const content = document.getElementById('latestScoresContent');
+    if (!wrapper || !content) return;
+
+    if (wrapper.style.maxHeight === '0px' || wrapper.style.maxHeight === '') {
+        wrapper.style.maxHeight = content.scrollHeight + 'px';
+    } else {
+        wrapper.style.maxHeight = '0px';
+    }
 }
 
 function renderLeagueStandings() {
@@ -715,12 +776,21 @@ function renderLeagueSimulator(key) {
                 </div>
                 <button id="backButton" class="secondary">Voltar ao menu</button>
             </div>
-            <div class="section-panel">
+            
+            <div class="section-panel" style="position: relative; z-index: 10;">
                 <button id="simulateRound" class="success">Simular rodada</button>
                 <button id="simulateAll" class="success">Simular campeonato</button>
             </div>
+            
             <div id="leagueSummary"></div>
-            <div id="leagueMatches"></div>
+            
+            <div style="text-align: center; margin: 15px 0;">
+                <button id="toggleScoresBtn" class="secondary" style="display: none;">Placares</button>
+            </div>
+            <div id="latestScoresWrapper" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease-in-out;">
+                <div id="latestScoresContent"></div>
+            </div>
+
             <div id="leagueTable"></div>
         </section>
     `;
@@ -728,48 +798,11 @@ function renderLeagueSimulator(key) {
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
     document.getElementById('simulateRound').addEventListener('click', simulateLeagueRound);
     document.getElementById('simulateAll').addEventListener('click', simulateLeagueAll);
-    renderLeagueStatus();
-    renderLeagueMatches();
-    renderLeagueStandings();
-}
-
-function renderLeagueMatches() {
-    const target = document.getElementById('leagueMatches');
-    if (!target) return;
+    document.getElementById('toggleScoresBtn').addEventListener('click', toggleScoresPanel);
     
-    if (state.currentRound === 0) {
-        target.innerHTML = '';
-        return;
-    }
-
-    const matchesByRound = {};
-    for (let round = 0; round < state.currentRound; round++) {
-        matchesByRound[round] = state.schedule[round] || [];
-    }
-
-    let matchesHtml = '';
-    Object.entries(matchesByRound).forEach(([round, matches]) => {
-        const matchRows = matches.map(match => {
-            const score = match.goalsA !== null ? `${match.goalsA} x ${match.goalsB}` : '-';
-            return `<div class="match-item"><span>${renderTeamLabel(match.teamA)}</span><span class="score-badge">${score}</span><span>${renderTeamLabel(match.teamB)}</span></div>`;
-        }).join('');
-        
-        matchesHtml += `
-            <div style="margin-top: 16px;">
-                <h4 style="color: var(--muted); font-size: 0.95rem; margin: 0 0 10px 0;">Rodada ${Number(round) + 1}</h4>
-                <div style="display: grid; gap: 10px;">${matchRows}</div>
-            </div>
-        `;
-    });
-
-    target.innerHTML = `
-        <section class="card section-panel">
-            <h3>Placares dos jogos simulados</h3>
-            <div style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
-                ${matchesHtml}
-            </div>
-        </section>
-    `;
+    renderLeagueStatus();
+    updateScoresPanel();
+    renderLeagueStandings();
 }
 
 function setupLibertadoresSelection() {
@@ -1581,8 +1614,8 @@ function startLiveMatch(mode) {
         
         tournament.live.matches.forEach(match => {
             match.minute = tournament.live.minute;
-            const strengthA = match.teamA.strength || 50; // Segurança
-            const strengthB = match.teamB.strength || 50; // Segurança
+            const strengthA = match.teamA.strength || 50;
+            const strengthB = match.teamB.strength || 50;
             let chanceA = 0.012 + (strengthA / 10000) + ((strengthA - strengthB) / 2000);
             let chanceB = 0.012 + (strengthB / 10000) + ((strengthB - strengthA) / 2000);
             chanceA = Math.max(0.002, Math.min(0.06, chanceA));
