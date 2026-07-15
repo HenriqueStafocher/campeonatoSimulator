@@ -1,6 +1,6 @@
 :root {
     --bg: #061021;
-    --surface: rgba(255,255,255,0.08);
+    --surface: rgba(83, 82, 82, 0.576);
     --surface-strong: rgba(255,255,255,0.14);
     --text: #e8eff9;
     --muted: #9fb5d1;
@@ -16,9 +16,11 @@
 html, body {
     margin: 0;
     min-height: 100%;
-    background: radial-gradient(circle at top left, rgba(33, 122, 212, 0.24), transparent 24%),
-                radial-gradient(circle at top right, rgba(42, 140, 255, 0.18), transparent 20%),
-                var(--bg);
+    background-image: url('img2/background.png');
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
     color: var(--text);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -119,6 +121,52 @@ button.danger {
 button.success {
     background: var(--success);
 }
+
+/* ======================================================== 
+   NOVOS ESTILOS PARA OS BOTÕES DO MENU PRINCIPAL (LIGAS) 
+   ======================================================== */
+.league-btn {
+    width: 100%;
+    min-height: 3.5em; /* Compensando a altura do grid com o efeito desejado */
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 0.625em;
+    font-size: 16px; /* Ajustado sutilmente para os textos caberem perfeitamente no seu grid */
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    transition: color 0.5s;
+    /* Removendo regras globais de botão que conflitariam com esse estilo único */
+    padding: 0;
+}
+
+.league-btn:hover {
+    color: black;
+    transform: none; /* Anula o translateY padrão do seu CSS */
+    filter: none;    /* Anula o brightness padrão do seu CSS */
+}
+
+.league-btn::after {
+    content: "";
+    background: white;
+    position: absolute;
+    z-index: -1;
+    left: -20%;
+    right: -20%;
+    top: 0;
+    bottom: 0;
+    transform: skewX(-45deg) scale(0, 1);
+    transition: all 0.5s;
+}
+
+.league-btn:hover::after {
+    transform: skewX(-45deg) scale(1, 1);
+    transition: all 0.5s;
+}
+/* ======================================================== */
 
 .grid-2 {
     display: grid;
@@ -377,8 +425,8 @@ table.stats-table {
 }
 
 table.standings th,
-table.standings td,
-table.stats-table th,
+table.stats-table td,
+table.standings th,
 table.stats-table td {
     padding: 12px 10px;
     text-align: left;

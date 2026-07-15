@@ -264,7 +264,8 @@ function renderTournamentStats(mode, expanded = false) {
 
 function renderMainScreen() {
     const buttons = leagueButtons.map(button => {
-        return `<button data-key="${button.key}" class="${button.special ? 'success' : ''}">${button.label}</button>`;
+        // Usando a classe league-btn especifica para a tela inicial
+        return `<button data-key="${button.key}" class="league-btn">${button.label}</button>`;
     }).join('');
 
     app.innerHTML = `
