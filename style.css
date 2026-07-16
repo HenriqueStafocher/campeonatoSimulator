@@ -13,16 +13,27 @@
     box-sizing: border-box;
 }
 
+/* NOVO: Background removido do body para evitar bugs no mobile e movido para body::before */
 html, body {
     margin: 0;
     min-height: 100%;
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* NOVO: Fica estático atrás do site, sem re-renderizar ao dar scroll no mobile */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-image: url('img2/background.png');
-    background-attachment: fixed;
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center center;
-    color: var(--text);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    z-index: -1;
 }
 
 body {
@@ -123,30 +134,29 @@ button.success {
 }
 
 /* ======================================================== 
-   NOVOS ESTILOS PARA OS BOTÕES DO MENU PRINCIPAL (LIGAS) 
+   ESTILOS PARA OS BOTÕES DO MENU PRINCIPAL (LIGAS) 
    ======================================================== */
 .league-btn {
     width: 100%;
-    min-height: 3.5em; /* Compensando a altura do grid com o efeito desejado */
+    min-height: 3.5em;
     background: black;
     color: white;
     border: none;
     border-radius: 0.625em;
-    font-size: 16px; /* Ajustado sutilmente para os textos caberem perfeitamente no seu grid */
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     position: relative;
     z-index: 1;
     overflow: hidden;
     transition: color 0.5s;
-    /* Removendo regras globais de botão que conflitariam com esse estilo único */
     padding: 0;
 }
 
 .league-btn:hover {
     color: black;
-    transform: none; /* Anula o translateY padrão do seu CSS */
-    filter: none;    /* Anula o brightness padrão do seu CSS */
+    transform: none;
+    filter: none;
 }
 
 .league-btn::after {
@@ -468,7 +478,7 @@ table.stats-table tr + tr td {
 .stats-panel .table-wrapper {
     margin-top: 8px;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto; /* NOVO: Permitir scroll lateral */
     flex: 1;
     min-height: 0;
     padding-right: 4px;
@@ -476,6 +486,7 @@ table.stats-table tr + tr td {
 
 .stats-panel .table-wrapper::-webkit-scrollbar {
     width: 8px;
+    height: 8px; /* NOVO: barra de rolagem horizontal */
 }
 
 .stats-panel .table-wrapper::-webkit-scrollbar-track {
@@ -626,7 +637,8 @@ table.stats-table tr + tr td {
     color: var(--muted);
 }
 
-/* Responsividade para tabela de gols no mobile */
+/* NOVO: Regras de bloco deletadas de table.standings e table.stats-table no @media. 
+   Agora elas rolam horizontalmente mantendo o visual limpo de tabela. */
 @media (max-width: 600px) {
     .stats-panel {
         max-height: none;
@@ -634,72 +646,10 @@ table.stats-table tr + tr td {
     }
 
     .stats-panel .table-wrapper {
-        overflow-x: hidden;
-        overflow-y: visible;
         margin-top: 12px;
     }
 
-    table.stats-table {
-        min-width: 100%;
-        display: block;
-    }
-
-    table.stats-table thead {
-        display: none;
-    }
-
-    table.stats-table tbody {
-        display: block;
-    }
-
-    table.stats-table tr {
-        display: block;
-        margin-bottom: 14px;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 14px;
-        padding: 12px;
-        border-top: none !important;
-    }
-
-    table.stats-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        font-size: 0.9rem;
-    }
-
-    table.stats-table td:first-child {
-        border-top: none;
-    }
-
-    table.stats-table td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: var(--muted);
-        font-size: 0.85rem;
-        flex: 0 0 40%;
-    }
-
-    /* Saldo de gols destacado */
-    table.stats-table tr > td:nth-child(4) {
-        background: rgba(6, 214, 160, 0.12);
-        padding: 10px;
-        margin: 8px -12px -8px -12px;
-        border-radius: 10px;
-        justify-content: center;
-        gap: 8px;
-        font-weight: 700;
-        font-size: 1.05rem;
-    }
-
-    table.stats-table tr > td:nth-child(4)::before {
-        display: none;
-    }
-
-    /* Tabela de história de jogos responsiva */
+    /* Tabela de história de jogos mantida em cards pois se encaixa bem */
     table.history-table {
         min-width: 100%;
         display: block;
@@ -743,7 +693,6 @@ table.stats-table tr + tr td {
         flex: 0 0 35%;
     }
 
-    /* Placar destacado */
     table.history-table tr > td:nth-child(4) {
         background: rgba(58, 134, 255, 0.12);
         padding: 10px;
@@ -757,67 +706,6 @@ table.stats-table tr + tr td {
     }
 
     table.history-table tr > td:nth-child(4)::before {
-        display: none;
-    }
-
-    /* Tabela de standings também responsiva */
-    table.standings {
-        min-width: 100%;
-        display: block;
-    }
-
-    table.standings thead {
-        display: none;
-    }
-
-    table.standings tbody {
-        display: block;
-    }
-
-    table.standings tr {
-        display: block;
-        margin-bottom: 14px;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 14px;
-        padding: 12px;
-        border-top: none !important;
-    }
-
-    table.standings td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        font-size: 0.9rem;
-    }
-
-    table.standings td:first-child {
-        border-top: none;
-    }
-
-    table.standings td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: var(--muted);
-        font-size: 0.85rem;
-        flex: 0 0 45%;
-    }
-
-    /* Saldo de gols destacado na tabela de standings */
-    table.standings tr > td:nth-child(10) {
-        background: rgba(6, 214, 160, 0.12);
-        padding: 10px;
-        margin: 8px -12px -8px -12px;
-        border-radius: 10px;
-        justify-content: center;
-        gap: 8px;
-        font-weight: 700;
-        font-size: 1.05rem;
-    }
-
-    table.standings tr > td:nth-child(10)::before {
         display: none;
     }
 }

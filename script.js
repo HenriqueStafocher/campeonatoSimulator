@@ -87,6 +87,7 @@ const state = {
     leagueTeams: [],
     schedule: [],
     currentRound: 0,
+    isScoresPanelOpen: false, // NOVO: Controle de estado do painel de placares
     libertadores: {
         selectedIds: new Set(),
         pool: [],
@@ -263,8 +264,9 @@ function renderTournamentStats(mode, expanded = false) {
 }
 
 function renderMainScreen() {
+    state.isScoresPanelOpen = false; // Reseta painel ao voltar ao menu principal
+
     const buttons = leagueButtons.map(button => {
-        // Usando a classe league-btn especifica para a tela inicial
         return `<button data-key="${button.key}" class="league-btn">${button.label}</button>`;
     }).join('');
 
@@ -658,7 +660,7 @@ function renderLeagueStatus() {
     `;
 }
 
-// NOVO: Gerencia a renderização dos placares apenas da última rodada simulada
+// Atualizado para manter os placares abertos ou fechados de acordo com o state
 function updateScoresPanel() {
     const toggleBtn = document.getElementById('toggleScoresBtn');
     const wrapper = document.getElementById('latestScoresWrapper');
@@ -673,7 +675,6 @@ function updateScoresPanel() {
         return;
     }
 
-    // Mostra o botão a partir da 1ª rodada
     toggleBtn.style.display = 'inline-block';
 
     const lastRoundIndex = state.currentRound - 1;
@@ -691,17 +692,25 @@ function updateScoresPanel() {
         </div>
     `;
 
-    // Garante que a lista volte a fechar ao gerar uma nova simulação (esperando o clique)
-    wrapper.style.maxHeight = '0px';
+    // NOVO: Respeita a escolha do usuário se o painel deve ficar aberto ou fechado
+    if (state.isScoresPanelOpen) {
+        setTimeout(() => {
+            wrapper.style.maxHeight = content.scrollHeight + 'px';
+        }, 10);
+    } else {
+        wrapper.style.maxHeight = '0px';
+    }
 }
 
-// NOVO: Função responsável por abrir e fechar a lista com animação suave
+// Atualizado para controlar o state da visualização do placar
 function toggleScoresPanel() {
     const wrapper = document.getElementById('latestScoresWrapper');
     const content = document.getElementById('latestScoresContent');
     if (!wrapper || !content) return;
 
-    if (wrapper.style.maxHeight === '0px' || wrapper.style.maxHeight === '') {
+    state.isScoresPanelOpen = !state.isScoresPanelOpen;
+
+    if (state.isScoresPanelOpen) {
         wrapper.style.maxHeight = content.scrollHeight + 'px';
     } else {
         wrapper.style.maxHeight = '0px';
@@ -767,6 +776,7 @@ function renderLeagueSimulator(key) {
     state.leagueTeams = createChampionshipTeams(league.teams);
     state.schedule = buildSchedule(state.leagueTeams);
     state.currentRound = 0;
+    state.isScoresPanelOpen = false; // Reseta estado dos placares
 
     app.innerHTML = `
         <section class="card">
@@ -1700,10 +1710,7 @@ function renderChampionScreen(mode) {
 
 // Inicialização com garantia de carregamento
 function initApp() {
-    // Salva as ligas no localStorage para uso futuro
     StorageManager.saveLeagues();
-    
-    // Renderiza a tela principal
     renderMainScreen();
 }
 
