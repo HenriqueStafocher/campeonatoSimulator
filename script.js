@@ -611,7 +611,7 @@ function simulateMatch(match) {
     if (match.goalsA !== null) {
         return;
     }
-    const [goalsA, goalsB] = getGoals(match.teamA, match.teamB);
+    const [goalsA, goalsB] = getLeagueGoals(match.teamA, match.teamB); // UTILIZANDO FUNÇÃO ESPECÍFICA PARA LIGAS
     match.goalsA = goalsA;
     match.goalsB = goalsB;
     updateTeamStats(match.teamA, goalsA, goalsB);
@@ -633,19 +633,80 @@ function updateTeamStats(team, forGoals, againstGoals) {
     }
 }
 
-function getGoals(teamA, teamB) {
+// -----------------------------------------------------------
+// FUNÇÃO EXCLUSIVA PARA LIGAS DE PONTOS CORRIDOS (Mais zebras e empates)
+// -----------------------------------------------------------
+function getLeagueGoals(teamA, teamB) {
     const strengthA = Math.max(1, getEffectiveStrength(teamA));
     const strengthB = Math.max(1, getEffectiveStrength(teamB));
-    const diff = strengthA - strengthB;
     
-    const averageA = Math.max(0.2, 1.2 + (diff / 25) + (Math.random() * 0.4 - 0.2));
-    const averageB = Math.max(0.2, 1.2 - (diff / 25) + (Math.random() * 0.4 - 0.2));
+    // Divisor maior, reduzindo o impacto absoluto da força de cada time
+    const diff = (strengthA - strengthB) / 80;
     
-    const goalsA = Math.min(7, Math.max(0, Math.round(averageA + (Math.random() * 1.5))));
-    const goalsB = Math.min(7, Math.max(0, Math.round(averageB + (Math.random() * 1.5))));
+    let probA = 0.35 + diff; // Chance base é reduzida
+    let probTie = 0.30 - (Math.abs(diff) * 0.05); // Empates acontecem mais em ligas de pontos corridos
+    
+    // Limites de segurança (Garante bastante ocorrência de zebras e empates)
+    probTie = Math.max(0.20, Math.min(0.40, probTie)); // Empate sempre acontece entre 20% e 40% das vezes
+    probA = Math.max(0.35, Math.min(1 - probTie - 0.35, probA)); // Ninguém tem menos de 25% de chance de vitória
+    
+    const roll = Math.random();
+    
+    let goalsA = 0;
+    let goalsB = 0;
+
+    if (roll < probA) {
+        // Vitória do Time A
+        goalsA = Math.floor(Math.random() * 3) + 1; // 1 a 3 gols
+        goalsB = Math.floor(Math.random() * goalsA);
+    } else if (roll < probA + probTie) {
+        // Empate
+        goalsA = Math.floor(Math.random() * 3); // 0 a 2 gols
+        goalsB = goalsA;
+    } else {
+        // Vitória do Time B
+        goalsB = Math.floor(Math.random() * 3) + 1; // 1 a 3 gols
+        goalsA = Math.floor(Math.random() * goalsB);
+    }
     
     return [goalsA, goalsB];
 }
+
+// -----------------------------------------------------------
+// FUNÇÃO EXCLUSIVA PARA CAMPEONATOS (Fase de Grupos e Mata-Mata)
+// -----------------------------------------------------------
+function getTournamentGoals(teamA, teamB) {
+    const strengthA = Math.max(1, getEffectiveStrength(teamA));
+    const strengthB = Math.max(1, getEffectiveStrength(teamB));
+    
+    const diff = (strengthA - strengthB) / 40;
+    
+    let probA = 0.40 + diff; 
+    let probTie = 0.25 - (Math.abs(diff) * 0.1); 
+    
+    probTie = Math.max(0.15, Math.min(0.35, probTie)); 
+    probA = Math.max(0.15, Math.min(1 - probTie - 0.15, probA)); 
+    
+    const roll = Math.random();
+    
+    let goalsA = 0;
+    let goalsB = 0;
+
+    if (roll < probA) {
+        goalsA = Math.floor(Math.random() * 3) + 1;
+        goalsB = Math.floor(Math.random() * goalsA);
+    } else if (roll < probA + probTie) {
+        goalsA = Math.floor(Math.random() * 3); 
+        goalsB = goalsA;
+    } else {
+        goalsB = Math.floor(Math.random() * 3) + 1; 
+        goalsA = Math.floor(Math.random() * goalsB); 
+    }
+    
+    return [goalsA, goalsB];
+}
+// -----------------------------------------------------------
+
 
 function renderLeagueStatus() {
     const container = document.getElementById('leagueSummary');
@@ -660,7 +721,6 @@ function renderLeagueStatus() {
     `;
 }
 
-// Atualizado para manter os placares abertos ou fechados de acordo com o state
 function updateScoresPanel() {
     const toggleBtn = document.getElementById('toggleScoresBtn');
     const wrapper = document.getElementById('latestScoresWrapper');
@@ -692,7 +752,6 @@ function updateScoresPanel() {
         </div>
     `;
 
-    // NOVO: Respeita a escolha do usuário se o painel deve ficar aberto ou fechado
     if (state.isScoresPanelOpen) {
         setTimeout(() => {
             wrapper.style.maxHeight = content.scrollHeight + 'px';
@@ -702,7 +761,6 @@ function updateScoresPanel() {
     }
 }
 
-// Atualizado para controlar o state da visualização do placar
 function toggleScoresPanel() {
     const wrapper = document.getElementById('latestScoresWrapper');
     const content = document.getElementById('latestScoresContent');
@@ -1154,7 +1212,7 @@ function advanceTournamentGroupRound(mode) {
     tournament.groups.forEach(group => {
         const matches = group.rounds[currentRound];
         matches.forEach(match => {
-            const [goalsA, goalsB] = getGoals(match.teamA, match.teamB);
+            const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); // UTILIZANDO FUNÇÃO ESPECÍFICA PARA CAMPEONATOS
             match.goalsA = goalsA;
             match.goalsB = goalsB;
             updateTeamStats(match.teamA, goalsA, goalsB);
@@ -1330,7 +1388,7 @@ function simulateKnockoutStage(mode) {
     }
 
     knockout.matches.forEach(match => {
-        const [goalsA, goalsB] = getGoals(match.teamA, match.teamB);
+        const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); // UTILIZANDO FUNÇÃO ESPECÍFICA PARA CAMPEONATOS
         match.goalsA = goalsA;
         match.goalsB = goalsB;
         updateTeamStats(match.teamA, goalsA, goalsB);
@@ -1603,6 +1661,10 @@ function renderLiveKnockoutStage(mode) {
     }
 }
 
+// -----------------------------------------------------------
+// O startLiveMatch usa probabilidade por minuto e continua inalterado,
+// pois o pedido envolvia apenas as ligas (onde há problemas com a diferença de força).
+// -----------------------------------------------------------
 function startLiveMatch(mode) {
     const tournament = state[mode];
     
@@ -1627,10 +1689,14 @@ function startLiveMatch(mode) {
             match.minute = tournament.live.minute;
             const strengthA = match.teamA.strength || 50;
             const strengthB = match.teamB.strength || 50;
-            let chanceA = 0.012 + (strengthA / 10000) + ((strengthA - strengthB) / 2000);
-            let chanceB = 0.012 + (strengthB / 10000) + ((strengthB - strengthA) / 2000);
-            chanceA = Math.max(0.002, Math.min(0.06, chanceA));
-            chanceB = Math.max(0.002, Math.min(0.06, chanceB));
+            
+            // Suavizamos o impacto da diferença de força dividindo por 4000 em vez de 2000
+            let chanceA = 0.012 + (strengthA / 10000) + ((strengthA - strengthB) / 4000);
+            let chanceB = 0.012 + (strengthB / 10000) + ((strengthB - strengthA) / 4000);
+            
+            // Garantimos que a zebra sempre tem no mínimo 0.5% de chance de marcar por minuto
+            chanceA = Math.max(0.005, Math.min(0.06, chanceA));
+            chanceB = Math.max(0.005, Math.min(0.06, chanceB));
             
             if (Math.random() < chanceA) {
                 match.goalsA += 1;
@@ -1660,6 +1726,7 @@ function startLiveMatch(mode) {
         }
     }, 1000);
 }
+// -----------------------------------------------------------
 
 function renderPenaltyInterface(match, mode = match._mode) {
     if (!match.penalties) return '';
