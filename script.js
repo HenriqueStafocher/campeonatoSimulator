@@ -657,7 +657,7 @@ function getLeagueGoals(teamA, teamB) {
     let probTie = 0.30 - (Math.abs(diff) * 0.05); 
     
     probTie = Math.max(0.20, Math.min(0.40, probTie)); 
-    probA = Math.max(0.35, Math.min(1 - probTie - 0.35, probA)); 
+    probA = Math.max(0.35, Math.min(1 - probTie - 0.25, probA)); 
     
     const roll = Math.random();
     
