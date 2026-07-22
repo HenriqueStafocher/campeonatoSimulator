@@ -13,15 +13,16 @@
     box-sizing: border-box;
 }
 
-/* NOVO: Background removido do body para evitar bugs no mobile e movido para body::before */
 html, body {
     margin: 0;
     min-height: 100%;
     color: var(--text);
+    font-family: "Patua One", serif;
+    font-weight: 400;
+    font-style: normal;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* NOVO: Fica estático atrás do site, sem re-renderizar ao dar scroll no mobile */
 body::before {
     content: "";
     position: fixed;
@@ -59,8 +60,12 @@ body {
 footer {
     margin-top: 26px;
     text-align: center;
-    color: var(--muted);
-    font-size: 0.95rem;
+    background: linear-gradient(180deg,rgba(240, 255, 28, 1) 0%, rgba(176, 255, 28, 1) 62%, rgba(88, 242, 22, 1) 74%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.15rem;
+
 }
 
 .card {
@@ -76,7 +81,7 @@ footer {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 16px;
 }
 
@@ -110,6 +115,10 @@ input[type="submit"] {
     transition: transform 0.2s ease, filter 0.2s ease, background 0.2s ease;
     background: var(--accent);
     color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
 }
 
 button:hover,
@@ -253,6 +262,7 @@ button.success {
     align-items: center;
     gap: 8px;
     min-width: 0;
+    line-height: 1;
 }
 
 .team-avatar {
@@ -393,6 +403,7 @@ button.success {
     text-align: left;
     font-size: 0.94rem;
     white-space: nowrap;
+    vertical-align: middle;
 }
 
 .group-table td:nth-child(2),
@@ -436,11 +447,11 @@ table.stats-table {
 
 table.standings th,
 table.stats-table td,
-table.standings th,
-table.stats-table td {
+table.standings td {
     padding: 12px 10px;
     text-align: left;
     font-size: 0.92rem;
+    vertical-align: middle;
 }
 
 table.standings th,
@@ -478,7 +489,7 @@ table.stats-table tr + tr td {
 .stats-panel .table-wrapper {
     margin-top: 8px;
     overflow-y: auto;
-    overflow-x: auto; /* NOVO: Permitir scroll lateral */
+    overflow-x: auto;
     flex: 1;
     min-height: 0;
     padding-right: 4px;
@@ -486,7 +497,7 @@ table.stats-table tr + tr td {
 
 .stats-panel .table-wrapper::-webkit-scrollbar {
     width: 8px;
-    height: 8px; /* NOVO: barra de rolagem horizontal */
+    height: 8px;
 }
 
 .stats-panel .table-wrapper::-webkit-scrollbar-track {
@@ -532,6 +543,7 @@ table.stats-table tr + tr td {
     padding: 10px 8px;
     text-align: left;
     font-size: 0.92rem;
+    vertical-align: middle;
 }
 
 .history-table th {
@@ -547,6 +559,7 @@ table.stats-table tr + tr td {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    align-items: center;
 }
 
 .status-line strong {
@@ -637,8 +650,6 @@ table.stats-table tr + tr td {
     color: var(--muted);
 }
 
-/* NOVO: Regras de bloco deletadas de table.standings e table.stats-table no @media. 
-   Agora elas rolam horizontalmente mantendo o visual limpo de tabela. */
 @media (max-width: 600px) {
     .stats-panel {
         max-height: none;
@@ -649,7 +660,6 @@ table.stats-table tr + tr td {
         margin-top: 12px;
     }
 
-    /* Tabela de história de jogos mantida em cards pois se encaixa bem */
     table.history-table {
         min-width: 100%;
         display: block;
@@ -750,4 +760,61 @@ table.stats-table tr + tr td {
 
 .knockout-list .match-item:has(.score-badge:not(:contains("A definir"))) .score-badge {
     animation: scoreFlash 0.8s ease-out 1;
+}
+
+/* ======================================================== 
+   NOVO: Botões Externos (Discord e Feedback)
+   ======================================================== */
+.top-external-links {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+    align-items: center;
+}
+
+.btn-discord {
+    background-color: #5865F2 !important;
+    color: #ffffff !important;
+    border-radius: 0.625em;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0 18px;
+    min-height: 3.5em; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-discord:hover {
+    background-color: #4752C4 !important;
+}
+
+.btn-feedback {
+    background: #05611c !important;
+    color: #ffffff !important;
+    padding: 0 18px;
+    width: auto; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-feedback::after {
+    background: #751609 !important;
+}
+
+/* ======================================================== 
+   NOVO: Ajustes de Botões de Cabeçalho
+   ======================================================== */
+.header-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
 }

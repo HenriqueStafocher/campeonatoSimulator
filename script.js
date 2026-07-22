@@ -87,7 +87,7 @@ const state = {
     leagueTeams: [],
     schedule: [],
     currentRound: 0,
-    isScoresPanelOpen: false, // NOVO: Controle de estado do painel de placares
+    isScoresPanelOpen: false, 
     libertadores: {
         selectedIds: new Set(),
         pool: [],
@@ -155,11 +155,9 @@ function shuffle(array) {
 
 function getEffectiveStrength(team) {
     const baseStrength = Number(team?.strength);
-
     if (Number.isFinite(baseStrength) && baseStrength > 0) {
         return Math.max(1, Math.round(baseStrength));
     }
-
     return 50;
 }
 
@@ -264,13 +262,17 @@ function renderTournamentStats(mode, expanded = false) {
 }
 
 function renderMainScreen() {
-    state.isScoresPanelOpen = false; // Reseta painel ao voltar ao menu principal
+    state.isScoresPanelOpen = false;
 
     const buttons = leagueButtons.map(button => {
         return `<button data-key="${button.key}" class="league-btn">${button.label}</button>`;
     }).join('');
 
     app.innerHTML = `
+        <div class="top-external-links">
+            <button class="btn-discord" onclick="window.open('https://discord.gg/guw9HhE', '_blank')">Discord</button>
+            <button class="league-btn btn-feedback">Feedback</button>
+        </div>
         <section class="card">
             <div class="title-group">
                 <div>
@@ -426,7 +428,10 @@ function renderTournamentSelection(mode) {
                     <h2>${tournament.label}</h2>
                     <p class="description">${description}</p>
                 </div>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             <div class="status-line">
                 <span>Times selecionados: <strong>${selectedCount}</strong> / ${targetSize}</span>
@@ -438,6 +443,11 @@ function renderTournamentSelection(mode) {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => {
+        if (mode === 'libertadores') setupLibertadoresSelection();
+        else setupTournamentSelection(mode);
+    });
+    
     document.getElementById('randomFill').addEventListener('click', () => {
         fillTournamentWithRandomTeams(mode);
         renderTournamentSelection(mode);
@@ -497,10 +507,13 @@ function renderSimpleSpecial(title, description) {
                     <h2>${title}</h2>
                     <p class="description">${description}</p>
                 </div>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             <div class="status-line">
                 <span>Rodada atual: <strong>0 / ${state.schedule.length}</strong></span>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
             </div>
             
             <div class="section-panel" style="position: relative; z-index: 10;">
@@ -522,6 +535,7 @@ function renderSimpleSpecial(title, description) {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => renderSimpleSpecial(title, description));
     document.getElementById('simulateRound').addEventListener('click', simulateLeagueRound);
     document.getElementById('simulateAll').addEventListener('click', simulateLeagueAll);
     document.getElementById('toggleScoresBtn').addEventListener('click', toggleScoresPanel);
@@ -611,7 +625,7 @@ function simulateMatch(match) {
     if (match.goalsA !== null) {
         return;
     }
-    const [goalsA, goalsB] = getLeagueGoals(match.teamA, match.teamB); // UTILIZANDO FUNÇÃO ESPECÍFICA PARA LIGAS
+    const [goalsA, goalsB] = getLeagueGoals(match.teamA, match.teamB); 
     match.goalsA = goalsA;
     match.goalsB = goalsB;
     updateTeamStats(match.teamA, goalsA, goalsB);
@@ -633,22 +647,17 @@ function updateTeamStats(team, forGoals, againstGoals) {
     }
 }
 
-// -----------------------------------------------------------
-// FUNÇÃO EXCLUSIVA PARA LIGAS DE PONTOS CORRIDOS (Mais zebras e empates)
-// -----------------------------------------------------------
 function getLeagueGoals(teamA, teamB) {
     const strengthA = Math.max(1, getEffectiveStrength(teamA));
     const strengthB = Math.max(1, getEffectiveStrength(teamB));
     
-    // Divisor maior, reduzindo o impacto absoluto da força de cada time
     const diff = (strengthA - strengthB) / 80;
     
-    let probA = 0.35 + diff; // Chance base é reduzida
-    let probTie = 0.30 - (Math.abs(diff) * 0.05); // Empates acontecem mais em ligas de pontos corridos
+    let probA = 0.35 + diff; 
+    let probTie = 0.30 - (Math.abs(diff) * 0.05); 
     
-    // Limites de segurança (Garante bastante ocorrência de zebras e empates)
-    probTie = Math.max(0.20, Math.min(0.40, probTie)); // Empate sempre acontece entre 20% e 40% das vezes
-    probA = Math.max(0.35, Math.min(1 - probTie - 0.35, probA)); // Ninguém tem menos de 25% de chance de vitória
+    probTie = Math.max(0.20, Math.min(0.40, probTie)); 
+    probA = Math.max(0.35, Math.min(1 - probTie - 0.35, probA)); 
     
     const roll = Math.random();
     
@@ -656,25 +665,19 @@ function getLeagueGoals(teamA, teamB) {
     let goalsB = 0;
 
     if (roll < probA) {
-        // Vitória do Time A
-        goalsA = Math.floor(Math.random() * 3) + 1; // 1 a 3 gols
+        goalsA = Math.floor(Math.random() * 3) + 1; 
         goalsB = Math.floor(Math.random() * goalsA);
     } else if (roll < probA + probTie) {
-        // Empate
-        goalsA = Math.floor(Math.random() * 3); // 0 a 2 gols
+        goalsA = Math.floor(Math.random() * 3); 
         goalsB = goalsA;
     } else {
-        // Vitória do Time B
-        goalsB = Math.floor(Math.random() * 3) + 1; // 1 a 3 gols
+        goalsB = Math.floor(Math.random() * 3) + 1; 
         goalsA = Math.floor(Math.random() * goalsB);
     }
     
     return [goalsA, goalsB];
 }
 
-// -----------------------------------------------------------
-// FUNÇÃO EXCLUSIVA PARA CAMPEONATOS (Fase de Grupos e Mata-Mata)
-// -----------------------------------------------------------
 function getTournamentGoals(teamA, teamB) {
     const strengthA = Math.max(1, getEffectiveStrength(teamA));
     const strengthB = Math.max(1, getEffectiveStrength(teamB));
@@ -705,8 +708,6 @@ function getTournamentGoals(teamA, teamB) {
     
     return [goalsA, goalsB];
 }
-// -----------------------------------------------------------
-
 
 function renderLeagueStatus() {
     const container = document.getElementById('leagueSummary');
@@ -834,7 +835,7 @@ function renderLeagueSimulator(key) {
     state.leagueTeams = createChampionshipTeams(league.teams);
     state.schedule = buildSchedule(state.leagueTeams);
     state.currentRound = 0;
-    state.isScoresPanelOpen = false; // Reseta estado dos placares
+    state.isScoresPanelOpen = false;
 
     app.innerHTML = `
         <section class="card">
@@ -843,7 +844,10 @@ function renderLeagueSimulator(key) {
                     <h2>${league.label}</h2>
                     <p class="description">Simule um campeonato com os times desta liga. Use as opcoes abaixo para avancar rodada a rodada ou finalizar a competicao.</p>
                 </div>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             
             <div class="section-panel" style="position: relative; z-index: 10;">
@@ -865,6 +869,7 @@ function renderLeagueSimulator(key) {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => renderLeagueSimulator(key));
     document.getElementById('simulateRound').addEventListener('click', simulateLeagueRound);
     document.getElementById('simulateAll').addEventListener('click', simulateLeagueAll);
     document.getElementById('toggleScoresBtn').addEventListener('click', toggleScoresPanel);
@@ -941,7 +946,10 @@ function renderLibertadoresSelection() {
                     <h2>Libertadores</h2>
                     <p class="description">Escolha os times para a fase inicial. Selecione ate 32 times. Use o botao RANDOM para completar automaticamente.</p>
                 </div>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             <div class="status-line">
                 <span>Times selecionados: <strong>${selectedCount}</strong> / 32</span>
@@ -955,6 +963,7 @@ function renderLibertadoresSelection() {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => setupLibertadoresSelection());
     document.getElementById('randomFill').addEventListener('click', () => {
         fillLibertadoresWithRandomTeams();
         renderLibertadoresSelection();
@@ -1130,7 +1139,10 @@ function renderTournamentGroupStage(mode) {
                     <h2>${title}</h2>
                     <p class="description">${description}</p>
                 </div>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             <div class="status-line">
                 <span>Rodada atual: <strong>${displayRound}</strong> / ${maxRounds}</span>
@@ -1159,6 +1171,10 @@ function renderTournamentGroupStage(mode) {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => {
+        if (mode === 'libertadores') setupLibertadoresSelection();
+        else setupTournamentSelection(mode);
+    });
     document.getElementById('advanceRound').addEventListener('click', () => {
         advanceTournamentGroupRound(mode);
         renderTournamentGroupStage(mode);
@@ -1212,7 +1228,7 @@ function advanceTournamentGroupRound(mode) {
     tournament.groups.forEach(group => {
         const matches = group.rounds[currentRound];
         matches.forEach(match => {
-            const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); // UTILIZANDO FUNÇÃO ESPECÍFICA PARA CAMPEONATOS
+            const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); 
             match.goalsA = goalsA;
             match.goalsB = goalsB;
             updateTeamStats(match.teamA, goalsA, goalsB);
@@ -1326,7 +1342,10 @@ function renderKnockoutStage(mode) {
                     <h2>${title}</h2>
                     <p class="description">Simule a fase de mata-mata. Se algum jogo terminar empatado, use o botão PÊNALTIS.</p>
                 </div>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             <div class="status-line">
                 ${simulateButtonHtml}
@@ -1338,6 +1357,11 @@ function renderKnockoutStage(mode) {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => {
+        if (mode === 'libertadores') setupLibertadoresSelection();
+        else setupTournamentSelection(mode);
+    });
+    
     const simulateKnockoutButton = document.getElementById('simulateKnockout');
     if (simulateKnockoutButton) {
         simulateKnockoutButton.addEventListener('click', () => {
@@ -1388,7 +1412,7 @@ function simulateKnockoutStage(mode) {
     }
 
     knockout.matches.forEach(match => {
-        const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); // UTILIZANDO FUNÇÃO ESPECÍFICA PARA CAMPEONATOS
+        const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); 
         match.goalsA = goalsA;
         match.goalsB = goalsB;
         updateTeamStats(match.teamA, goalsA, goalsB);
@@ -1595,7 +1619,10 @@ function renderLiveKnockoutStage(mode) {
                     <h2>${title}</h2>
                     <p class="description">Partidas simultâneas com tempo e histórico de gols.</p>
                 </div>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             <div class="status-line">
                 <span>Tempo: <strong>${tournament.live.minute}'</strong></span>
@@ -1612,6 +1639,10 @@ function renderLiveKnockoutStage(mode) {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => {
+        if (mode === 'libertadores') setupLibertadoresSelection();
+        else setupTournamentSelection(mode);
+    });
     
     document.getElementById('startLiveMatch').addEventListener('click', () => {
         if (tournament.live.inProgress) return;
@@ -1661,10 +1692,6 @@ function renderLiveKnockoutStage(mode) {
     }
 }
 
-// -----------------------------------------------------------
-// O startLiveMatch usa probabilidade por minuto e continua inalterado,
-// pois o pedido envolvia apenas as ligas (onde há problemas com a diferença de força).
-// -----------------------------------------------------------
 function startLiveMatch(mode) {
     const tournament = state[mode];
     
@@ -1690,11 +1717,9 @@ function startLiveMatch(mode) {
             const strengthA = match.teamA.strength || 50;
             const strengthB = match.teamB.strength || 50;
             
-            // Suavizamos o impacto da diferença de força dividindo por 4000 em vez de 2000
             let chanceA = 0.012 + (strengthA / 10000) + ((strengthA - strengthB) / 4000);
             let chanceB = 0.012 + (strengthB / 10000) + ((strengthB - strengthA) / 4000);
             
-            // Garantimos que a zebra sempre tem no mínimo 0.5% de chance de marcar por minuto
             chanceA = Math.max(0.005, Math.min(0.06, chanceA));
             chanceB = Math.max(0.005, Math.min(0.06, chanceB));
             
@@ -1726,7 +1751,6 @@ function startLiveMatch(mode) {
         }
     }, 1000);
 }
-// -----------------------------------------------------------
 
 function renderPenaltyInterface(match, mode = match._mode) {
     if (!match.penalties) return '';
@@ -1763,7 +1787,10 @@ function renderChampionScreen(mode) {
                     <h2>Campeão do ${state[mode].label}</h2>
                     <p class="description">A final foi concluida e o torneio ja tem um campeão.</p>
                 </div>
-                <button id="backButton" class="secondary">Voltar ao menu</button>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="restartButton" class="danger">Recomeçar</button>
+                </div>
             </div>
             <div class="section-panel">
                 <h3>${state[mode].champion ? renderTeamLabel(state[mode].champion, { mode }) : 'Ainda sem campeão'}</h3>
@@ -1773,9 +1800,12 @@ function renderChampionScreen(mode) {
         ${renderTournamentStats(mode, true)}
     `;
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('restartButton').addEventListener('click', () => {
+        if (mode === 'libertadores') setupLibertadoresSelection();
+        else setupTournamentSelection(mode);
+    });
 }
 
-// Inicialização com garantia de carregamento
 function initApp() {
     StorageManager.saveLeagues();
     renderMainScreen();
