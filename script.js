@@ -271,7 +271,7 @@ function renderMainScreen() {
     app.innerHTML = `
         <div class="top-external-links">
             <button class="btn-discord" onclick="window.open('https://discord.gg/guw9HhE', '_blank')">Discord</button>
-            <button class="league-btn btn-feedback">Feedback</button>
+            <button class="league-btn btn-feedback" onclick="window.open('https://forms.gle/uUqpSgCfStb6ZSrv6', '_blank')">Feedback</button>
         </div>
         <section class="card">
             <div class="title-group">
@@ -399,7 +399,7 @@ function renderTournamentSelection(mode) {
             const selected = tournament.selectedIds.has(team.id);
             const highlighted = tournament.manualSelectedIds.has(team.id);
             return `
-                <label class="team-card${highlighted ? ' team-card--selected' : ''}">
+                <label class="team-card${highlighted ? ' team-card--selected' : ''}" data-name="${team.name.toLowerCase()}">
                     ${renderTeamLabel(team)}
                     <input type="checkbox" data-id="${team.id}" ${selected ? 'checked' : ''} />
                     <span class="custom-checkbox" aria-hidden="true"></span>
@@ -407,7 +407,7 @@ function renderTournamentSelection(mode) {
             `;
         }).join('');
         return `
-            <div class="card">
+            <div class="card league-group-card" data-league="${leagueKey}">
                 <h3>${group.label}</h3>
                 <div class="team-selection">${items}</div>
             </div>
@@ -439,6 +439,9 @@ function renderTournamentSelection(mode) {
                 <button id="startGroups" class="success" ${startDisabled ? 'disabled' : ''}>Fase de Grupos</button>
             </div>
         </section>
+        <div class="search-container">
+            <input type="text" id="teamSearchInput" class="team-search-input" placeholder="🔍 Digite para buscar um time..." value="${tournament.searchQuery || ''}" />
+        </div>
         <div class="section-panel">${sections}</div>
     `;
 
@@ -459,6 +462,52 @@ function renderTournamentSelection(mode) {
         tournament.selectedTeams = tournament.pool.filter(team => tournament.selectedIds.has(team.id));
         startTournamentGroupStage(mode);
     });
+
+    const searchInput = document.getElementById('teamSearchInput');
+    if (searchInput) {
+        const filterTeams = () => {
+            const query = searchInput.value.toLowerCase().trim();
+            tournament.searchQuery = searchInput.value;
+
+            const leagueCards = app.querySelectorAll('.league-group-card');
+            let totalVisible = 0;
+
+            leagueCards.forEach(card => {
+                const teamLabels = card.querySelectorAll('.team-card');
+                let visibleInGroup = 0;
+
+                teamLabels.forEach(label => {
+                    const teamName = label.getAttribute('data-name') || '';
+                    if (!query || teamName.includes(query)) {
+                        label.style.display = 'flex';
+                        visibleInGroup++;
+                        totalVisible++;
+                    } else {
+                        label.style.display = 'none';
+                    }
+                });
+
+                card.style.display = (visibleInGroup === 0 && query !== '') ? 'none' : 'block';
+            });
+
+            let noResultsEl = app.querySelector('.no-search-results');
+            if (totalVisible === 0 && query !== '') {
+                if (!noResultsEl) {
+                    noResultsEl = document.createElement('div');
+                    noResultsEl.className = 'alert-box no-search-results';
+                    app.querySelector('.section-panel').appendChild(noResultsEl);
+                }
+                noResultsEl.textContent = `Nenhum time encontrado com "${searchInput.value}".`;
+            } else if (noResultsEl) {
+                noResultsEl.remove();
+            }
+        };
+
+        searchInput.addEventListener('input', filterTeams);
+        if (tournament.searchQuery) {
+            filterTeams();
+        }
+    }
 
     app.querySelectorAll('input[type=checkbox][data-id]').forEach(input => {
         input.addEventListener('change', () => {
@@ -921,7 +970,7 @@ function renderLibertadoresSelection() {
             const selected = state.libertadores.selectedIds.has(team.id);
             const highlighted = state.libertadores.manualSelectedIds.has(team.id);
             return `
-                <label class="team-card${highlighted ? ' team-card--selected' : ''}">
+                <label class="team-card${highlighted ? ' team-card--selected' : ''}" data-name="${team.name.toLowerCase()}">
                     ${renderTeamLabel(team)}
                     <input type="checkbox" data-id="${team.id}" ${selected ? 'checked' : ''} />
                     <span class="custom-checkbox" aria-hidden="true"></span>
@@ -929,7 +978,7 @@ function renderLibertadoresSelection() {
             `;
         }).join('');
         return `
-            <div class="card">
+            <div class="card league-group-card">
                 <h3>${label}</h3>
                 <div class="team-selection">${items}</div>
             </div>
@@ -957,6 +1006,9 @@ function renderLibertadoresSelection() {
                 <button id="startGroups" class="success" ${selectedCount < 1 ? 'disabled' : ''}>Fase de Grupos</button>
             </div>
         </section>
+        <div class="search-container">
+            <input type="text" id="teamSearchInput" class="team-search-input" placeholder="🔍 Digite para buscar um time..." value="${state.libertadores.searchQuery || ''}" />
+        </div>
         <div class="section-panel">
             ${sections}
         </div>
@@ -968,6 +1020,52 @@ function renderLibertadoresSelection() {
         fillLibertadoresWithRandomTeams();
         renderLibertadoresSelection();
     });
+
+    const searchInput = document.getElementById('teamSearchInput');
+    if (searchInput) {
+        const filterTeams = () => {
+            const query = searchInput.value.toLowerCase().trim();
+            state.libertadores.searchQuery = searchInput.value;
+
+            const leagueCards = app.querySelectorAll('.league-group-card');
+            let totalVisible = 0;
+
+            leagueCards.forEach(card => {
+                const teamLabels = card.querySelectorAll('.team-card');
+                let visibleInGroup = 0;
+
+                teamLabels.forEach(label => {
+                    const teamName = label.getAttribute('data-name') || '';
+                    if (!query || teamName.includes(query)) {
+                        label.style.display = 'flex';
+                        visibleInGroup++;
+                        totalVisible++;
+                    } else {
+                        label.style.display = 'none';
+                    }
+                });
+
+                card.style.display = (visibleInGroup === 0 && query !== '') ? 'none' : 'block';
+            });
+
+            let noResultsEl = app.querySelector('.no-search-results');
+            if (totalVisible === 0 && query !== '') {
+                if (!noResultsEl) {
+                    noResultsEl = document.createElement('div');
+                    noResultsEl.className = 'alert-box no-search-results';
+                    app.querySelector('.section-panel').appendChild(noResultsEl);
+                }
+                noResultsEl.textContent = `Nenhum time encontrado com "${searchInput.value}".`;
+            } else if (noResultsEl) {
+                noResultsEl.remove();
+            }
+        };
+
+        searchInput.addEventListener('input', filterTeams);
+        if (state.libertadores.searchQuery) {
+            filterTeams();
+        }
+    }
     document.getElementById('startGroups').addEventListener('click', () => {
         state.libertadores.selectedTeams = Array.from(state.libertadores.pool).filter(team => state.libertadores.selectedIds.has(team.id));
         if (state.libertadores.selectedTeams.length === 0) {
@@ -1479,30 +1577,32 @@ function processPenaltyKick(match) {
     const scoreB = penalties.attemptsB.filter(Boolean).length;
     const kicksA = penalties.attemptsA.length;
     const kicksB = penalties.attemptsB.length;
-    const remainingA = 5 - kicksA;
-    const remainingB = 5 - kicksB;
 
-    if (scoreA > scoreB + remainingB) {
-        penalties.winner = match.teamA;
-    } else if (scoreB > scoreA + remainingA) {
-        penalties.winner = match.teamB;
-    } else if (kicksA >= 5 && kicksB >= 5 && scoreA !== scoreB) {
-        penalties.winner = scoreA > scoreB ? match.teamA : match.teamB;
-    }
+    // Fase normal (primeiros 5 pênaltis para cada)
+    if (kicksA <= 5 && kicksB <= 5) {
+        const remainingA = 5 - kicksA;
+        const remainingB = 5 - kicksB;
 
-    if (kicksA >= 5 && kicksB >= 5 && scoreA === scoreB) {
-        penalties.turn = penalties.turn === 'A' ? 'B' : 'A';
-        return;
+        if (scoreA > scoreB + remainingB) {
+            penalties.winner = match.teamA;
+        } else if (scoreB > scoreA + remainingA) {
+            penalties.winner = match.teamB;
+        } else if (kicksA === 5 && kicksB === 5) {
+            if (scoreA > scoreB) penalties.winner = match.teamA;
+            else if (scoreB > scoreA) penalties.winner = match.teamB;
+        }
+    } else {
+        // Morte súbita (cobranças alternadas a partir da 6ª):
+        // Só avalia vencedor quando AMBOS os times já cobraram no mesmo número de rodadas (kicksA === kicksB)
+        if (kicksA === kicksB) {
+            if (scoreA > scoreB) penalties.winner = match.teamA;
+            else if (scoreB > scoreA) penalties.winner = match.teamB;
+        }
     }
 
     if (penalties.winner) {
         penalties.finished = true;
         match.winner = penalties.winner;
-        return;
-    }
-
-    if (kicksA >= 5 && kicksB >= 5 && kicksA === kicksB && scoreA === scoreB) {
-        penalties.turn = penalties.turn === 'A' ? 'B' : 'A';
         return;
     }
 
@@ -1553,6 +1653,248 @@ function handleSkipPenalties(mode, matchIndex, isLive) {
     else renderTournamentKnockout(mode);
 }
 
+function getMatchStatsSeed(match) {
+    if (match._statsSeed) return match._statsSeed;
+
+    const strengthA = match.teamA.strength || 50;
+    const strengthB = match.teamB.strength || 50;
+    const diff = strengthA - strengthB;
+
+    let possessionA = Math.round(50 + diff * 0.3 + (Math.random() * 10 - 5));
+    possessionA = Math.max(33, Math.min(67, possessionA));
+    const possessionB = 100 - possessionA;
+
+    const basePassesA = Math.round(possessionA * 7.2 + (Math.random() * 60 - 30));
+    const basePassesB = Math.round(possessionB * 7.2 + (Math.random() * 60 - 30));
+
+    const precisionA = Math.max(72, Math.min(94, Math.round(74 + possessionA * 0.2 + (Math.random() * 6 - 3))));
+    const precisionB = Math.max(72, Math.min(94, Math.round(74 + possessionB * 0.2 + (Math.random() * 6 - 3))));
+
+    const totalShotsA = Math.max(4, Math.round(8 + (strengthA / 12) + (Math.random() * 8 - 4)));
+    const totalShotsB = Math.max(4, Math.round(8 + (strengthB / 12) + (Math.random() * 8 - 4)));
+
+    const targetShotsA = Math.max(0, Math.min(totalShotsA, Math.round(totalShotsA * (0.35 + Math.random() * 0.3))));
+    const targetShotsB = Math.max(0, Math.min(totalShotsB, Math.round(totalShotsB * (0.35 + Math.random() * 0.3))));
+
+    const foulsA = Math.max(4, Math.min(22, Math.round(11 + (Math.random() * 10 - 5))));
+    const foulsB = Math.max(4, Math.min(22, Math.round(11 + (Math.random() * 10 - 5))));
+
+    const yellowsA = Math.max(0, Math.min(8, Math.round((foulsA / 15) * 3 + (Math.random() * 3 - 1.5))));
+    const yellowsB = Math.max(0, Math.min(8, Math.round((foulsB / 15) * 3 + (Math.random() * 3 - 1.5))));
+
+    const redsA = Math.random() < 0.1 ? (Math.random() < 0.2 ? 2 : 1) : 0;
+    const redsB = Math.random() < 0.1 ? (Math.random() < 0.2 ? 2 : 1) : 0;
+
+    const offsidesA = Math.max(0, Math.min(6, Math.round(Math.random() * 4)));
+    const offsidesB = Math.max(0, Math.min(6, Math.round(Math.random() * 4)));
+
+    const cornersA = Math.max(0, Math.min(11, Math.round(Math.random() * 8 + (possessionA > 50 ? 2 : 0))));
+    const cornersB = Math.max(0, Math.min(11, Math.round(Math.random() * 8 + (possessionB > 50 ? 2 : 0))));
+
+    match._statsSeed = {
+        possessionA, possessionB,
+        basePassesA, basePassesB,
+        precisionA, precisionB,
+        totalShotsA, totalShotsB,
+        targetShotsA, targetShotsB,
+        foulsA, foulsB,
+        yellowsA, yellowsB,
+        redsA, redsB,
+        offsidesA, offsidesB,
+        cornersA, cornersB
+    };
+
+    return match._statsSeed;
+}
+
+function updatePossessionFluctuation(match) {
+    const seed = getMatchStatsSeed(match);
+    if (match._currentPossessionA === undefined) {
+        match._currentPossessionA = seed.possessionA;
+    }
+    // Oscilação de 1 em 1% conforme o tempo passa
+    if (Math.random() < 0.45) {
+        const delta = Math.random() < 0.5 ? 1 : -1;
+        match._currentPossessionA = Math.max(30, Math.min(70, match._currentPossessionA + delta));
+    }
+    return {
+        possessionA: match._currentPossessionA,
+        possessionB: 100 - match._currentPossessionA
+    };
+}
+
+function getLiveMatchStats(match, minute) {
+    const seed = getMatchStatsSeed(match);
+    const poss = updatePossessionFluctuation(match);
+    const progress = Math.min(1, Math.max(0, (minute || 0) / 90));
+
+    if (minute === 0) {
+        return {
+            possessionA: poss.possessionA, possessionB: poss.possessionB,
+            passesA: 0, passesB: 0,
+            precisionA: seed.precisionA, precisionB: seed.precisionB,
+            shotsA: 0, shotsB: 0,
+            targetShotsA: 0, targetShotsB: 0,
+            foulsA: 0, foulsB: 0,
+            yellowsA: 0, yellowsB: 0,
+            redsA: 0, redsB: 0,
+            offsidesA: 0, offsidesB: 0,
+            cornersA: 0, cornersB: 0
+        };
+    }
+
+    const passesA = Math.round((poss.possessionA * 7.2 + (seed.basePassesA - seed.possessionA * 7.2)) * progress);
+    const passesB = Math.round((poss.possessionB * 7.2 + (seed.basePassesB - seed.possessionB * 7.2)) * progress);
+
+    return {
+        possessionA: poss.possessionA,
+        possessionB: poss.possessionB,
+        passesA: Math.max(0, passesA),
+        passesB: Math.max(0, passesB),
+        precisionA: seed.precisionA,
+        precisionB: seed.precisionB,
+        shotsA: Math.round(seed.totalShotsA * progress),
+        shotsB: Math.round(seed.totalShotsB * progress),
+        targetShotsA: Math.round(seed.targetShotsA * progress),
+        targetShotsB: Math.round(seed.targetShotsB * progress),
+        foulsA: Math.round(seed.foulsA * progress),
+        foulsB: Math.round(seed.foulsB * progress),
+        yellowsA: Math.round(seed.yellowsA * progress),
+        yellowsB: Math.round(seed.yellowsB * progress),
+        redsA: Math.round(seed.redsA * progress),
+        redsB: Math.round(seed.redsB * progress),
+        offsidesA: Math.round(seed.offsidesA * progress),
+        offsidesB: Math.round(seed.offsidesB * progress),
+        cornersA: Math.round(seed.cornersA * progress),
+        cornersB: Math.round(seed.cornersB * progress)
+    };
+}
+
+function calculateWinProbabilities(match, minute) {
+    const strengthA = match.teamA.strength || 50;
+    const strengthB = match.teamB.strength || 50;
+    const goalsA = match.goalsA || 0;
+    const goalsB = match.goalsB || 0;
+    const m = Math.min(90, Math.max(0, minute || 0));
+
+    const diffGoals = goalsA - goalsB;
+    const diffStr = strengthA - strengthB;
+
+    let probA = 38 + diffStr * 0.4 + diffGoals * 22;
+    let probB = 38 - diffStr * 0.4 - diffGoals * 22;
+    let draw = 24;
+
+    if (m > 0) {
+        if (diffGoals > 0) {
+            const factor = (m / 90) * 35;
+            probA += factor;
+            probB = Math.max(2, probB - factor * 0.7);
+            draw = Math.max(3, draw - factor * 0.3);
+        } else if (diffGoals < 0) {
+            const factor = (m / 90) * 35;
+            probB += factor;
+            probA = Math.max(2, probA - factor * 0.7);
+            draw = Math.max(3, draw - factor * 0.3);
+        } else {
+            const drawBoost = (m / 90) * 15;
+            draw += drawBoost;
+            probA = Math.max(5, probA - drawBoost * 0.5);
+            probB = Math.max(5, probB - drawBoost * 0.5);
+        }
+    }
+
+    probA = Math.max(3, probA);
+    probB = Math.max(3, probB);
+    draw = Math.max(3, draw);
+
+    const total = probA + probB + draw;
+    const pctA = Math.round((probA / total) * 100);
+    const pctB = Math.round((probB / total) * 100);
+    const pctDraw = Math.max(0, 100 - pctA - pctB);
+
+    return { pctA, pctDraw, pctB };
+}
+
+function getBadgeClasses(valA, valB, higherIsBetter = true) {
+    const numA = typeof valA === 'number' ? valA : parseFloat(String(valA).replace('%', '')) || 0;
+    const numB = typeof valB === 'number' ? valB : parseFloat(String(valB).replace('%', '')) || 0;
+
+    if (numA === numB) {
+        return {
+            classA: 'stats-badge stats-badge--neutral',
+            classB: 'stats-badge stats-badge--neutral'
+        };
+    }
+
+    const isAWinner = higherIsBetter ? (numA > numB) : (numA < numB);
+    if (isAWinner) {
+        return {
+            classA: 'stats-badge stats-badge--highlight',
+            classB: 'stats-badge stats-badge--neutral'
+        };
+    } else {
+        return {
+            classA: 'stats-badge stats-badge--neutral',
+            classB: 'stats-badge stats-badge--highlight'
+        };
+    }
+}
+
+function renderLiveMatchStatsPanel(match, mode) {
+    const stats = getLiveMatchStats(match, match.minute);
+    const prob = calculateWinProbabilities(match, match.minute);
+
+    const rows = [
+        { label: 'Chutes', keyA: 'shotsA', keyB: 'shotsB', valA: stats.shotsA, valB: stats.shotsB, higherIsBetter: true },
+        { label: 'Chutes a gol', keyA: 'targetShotsA', keyB: 'targetShotsB', valA: stats.targetShotsA, valB: stats.targetShotsB, higherIsBetter: true },
+        { label: 'Posse de bola', keyA: 'possessionA', keyB: 'possessionB', valA: `${stats.possessionA}%`, valB: `${stats.possessionB}%`, higherIsBetter: true },
+        { label: 'Passes', keyA: 'passesA', keyB: 'passesB', valA: stats.passesA, valB: stats.passesB, higherIsBetter: true },
+        { label: 'Precisão de passe', keyA: 'precisionA', keyB: 'precisionB', valA: `${stats.precisionA}%`, valB: `${stats.precisionB}%`, higherIsBetter: true },
+        { label: 'Faltas', keyA: 'foulsA', keyB: 'foulsB', valA: stats.foulsA, valB: stats.foulsB, higherIsBetter: false },
+        { label: 'Cartões amarelos', keyA: 'yellowsA', keyB: 'yellowsB', valA: stats.yellowsA, valB: stats.yellowsB, higherIsBetter: false },
+        { label: 'Cartões vermelhos', keyA: 'redsA', keyB: 'redsB', valA: stats.redsA, valB: stats.redsB, higherIsBetter: false },
+        { label: 'Impedimentos', keyA: 'offsidesA', keyB: 'offsidesB', valA: stats.offsidesA, valB: stats.offsidesB, higherIsBetter: false },
+        { label: 'Escanteios', keyA: 'cornersA', keyB: 'cornersB', valA: stats.cornersA, valB: stats.cornersB, higherIsBetter: true }
+    ];
+
+    const rowsHtml = rows.map(r => {
+        const { classA, classB } = getBadgeClasses(r.valA, r.valB, r.higherIsBetter);
+        return `
+            <div class="stats-row-item">
+                <span class="${classA}" data-stat="${r.keyA}-${match.id}">${r.valA}</span>
+                <span class="stats-metric-name">${r.label}</span>
+                <span class="${classB}" data-stat="${r.keyB}-${match.id}">${r.valB}</span>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="match-stats-panel" id="stats-panel-${match.id}">
+            <div class="stats-header-title">
+                <span>${renderTeamLabel(match.teamA, { mode })}</span>
+                <span>ESTATÍSTICAS DOS TIMES</span>
+                <span>${renderTeamLabel(match.teamB, { mode })}</span>
+            </div>
+            <div class="stats-table-list">
+                ${rowsHtml}
+            </div>
+            <div class="win-prob-section">
+                <div class="win-prob-title">PROBABILIDADE DE VITÓRIA</div>
+                <div class="win-prob-labels">
+                    <span><strong>${match.teamA.name}</strong> <span data-prob-val-a="${match.id}">${prob.pctA}%</span></span>
+                    <span><strong>Empate</strong> <span data-prob-val-draw="${match.id}">${prob.pctDraw}%</span></span>
+                    <span><strong>${match.teamB.name}</strong> <span data-prob-val-b="${match.id}">${prob.pctB}%</span></span>
+                </div>
+                <div class="win-prob-bar-container">
+                    <div class="win-prob-segment win-prob-segment--teamA" data-prob-bar-a="${match.id}" style="width: ${prob.pctA}%;"></div>
+                    <div class="win-prob-segment win-prob-segment--draw" data-prob-bar-draw="${match.id}" style="width: ${prob.pctDraw}%;"></div>
+                    <div class="win-prob-segment win-prob-segment--teamB" data-prob-bar-b="${match.id}" style="width: ${prob.pctB}%;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function renderLiveKnockoutStage(mode) {
     const tournament = state[mode];
     const { stage, matches } = tournament.knockout;
@@ -1578,6 +1920,7 @@ function renderLiveKnockoutStage(mode) {
         };
     }
 
+    const isQuarterOrLater = [stages.quartas, stages.semi, stages.final].includes(stage);
     const allMatchesFinished = tournament.live.matches.every(match => match.winner);
     
     const matchRows = tournament.live.matches.map((match, idx) => {
@@ -1600,7 +1943,26 @@ function renderLiveKnockoutStage(mode) {
                 penaltyPart = renderPenaltyInterface(match, mode, match._idx, true);
             }
         }
-        return `<div class="match-item"><span>${renderTeamLabel(match.teamA, { mode })}</span><span>${score}</span><span>${renderTeamLabel(match.teamB, { mode })}</span>${result}${penaltyPart}</div>`;
+
+        const statsBtn = isQuarterOrLater
+            ? `<button data-toggle-match-stats="${match.id}" class="btn-stats toggle-match-stats">${match.showStats ? 'OCULTAR' : 'ESTATÍSTICAS'}</button>`
+            : '';
+
+        const statsPanelHtml = (isQuarterOrLater && match.showStats) ? renderLiveMatchStatsPanel(match, mode) : '';
+
+        return `
+            <div class="knockout-match-block" id="match-block-${match.id}">
+                <div class="match-item">
+                    <span>${renderTeamLabel(match.teamA, { mode })}</span>
+                    <span id="score-display-${match.id}">${score}</span>
+                    <span>${renderTeamLabel(match.teamB, { mode })}</span>
+                    ${result}
+                    ${penaltyPart}
+                    ${statsBtn}
+                </div>
+                ${statsPanelHtml}
+            </div>
+        `;
     }).join('');
 
     const historyRows = tournament.live.history.length ? tournament.live.history.map(event => `<div class="match-item"><span>${event.minute}'</span><span>${event.message}</span><span></span></div>`).join('') : '<div class="alert-box">Nenhum evento ainda.</div>';
@@ -1625,7 +1987,7 @@ function renderLiveKnockoutStage(mode) {
                 </div>
             </div>
             <div class="status-line">
-                <span>Tempo: <strong>${tournament.live.minute}'</strong></span>
+                <span>Tempo: <strong id="live-minute-display">${tournament.live.minute}'</strong></span>
                 <button id="startLiveMatch" class="success">Iniciar partidas</button>
                 ${nextStageButton}
             </div>
@@ -1647,6 +2009,17 @@ function renderLiveKnockoutStage(mode) {
     document.getElementById('startLiveMatch').addEventListener('click', () => {
         if (tournament.live.inProgress) return;
         startLiveMatch(mode);
+    });
+
+    app.querySelectorAll('.toggle-match-stats').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const matchId = btn.getAttribute('data-toggle-match-stats');
+            const match = tournament.live.matches.find(m => String(m.id) === String(matchId));
+            if (match) {
+                match.showStats = !match.showStats;
+                renderLiveKnockoutStage(mode);
+            }
+        });
     });
 
     document.querySelectorAll('.open-live-penalty').forEach(btn => {
@@ -1689,6 +2062,83 @@ function renderLiveKnockoutStage(mode) {
             tournament.live = null;
             renderTournamentKnockout(mode);
         });
+    }
+}
+
+function updateLiveDOM(mode) {
+    const tournament = state[mode];
+    if (!tournament || !tournament.live) return;
+
+    // 1. Relógio do tempo
+    const minEl = document.getElementById('live-minute-display');
+    if (minEl) minEl.textContent = `${tournament.live.minute}'`;
+
+    // 2. Placar e Painéis de estatísticas em tempo real (SEM PISCAR)
+    tournament.live.matches.forEach(match => {
+        const scoreEl = document.getElementById(`score-display-${match.id}`);
+        if (scoreEl) {
+            let scoreText = match.goalsA === null ? '0 x 0' : `${match.goalsA} x ${match.goalsB}`;
+            if (match.penalties && match.penalties.finished) {
+                const scorePenA = match.penalties.attemptsA.filter(Boolean).length;
+                const scorePenB = match.penalties.attemptsB.filter(Boolean).length;
+                scoreText += ` (${scorePenA}x${scorePenB} pen)`;
+            }
+            scoreEl.textContent = scoreText;
+        }
+
+        // Se o painel de estatísticas da partida estiver aberto, atualiza APENAS os valores
+        const statsPanel = document.getElementById(`stats-panel-${match.id}`);
+        if (statsPanel) {
+            const stats = getLiveMatchStats(match, match.minute);
+            const prob = calculateWinProbabilities(match, match.minute);
+
+            const updateBadge = (keyA, keyB, valA, valB, higherIsBetter = true) => {
+                const badgeA = statsPanel.querySelector(`[data-stat="${keyA}-${match.id}"]`);
+                const badgeB = statsPanel.querySelector(`[data-stat="${keyB}-${match.id}"]`);
+                if (badgeA && badgeB) {
+                    badgeA.textContent = valA;
+                    badgeB.textContent = valB;
+
+                    const { classA, classB } = getBadgeClasses(valA, valB, higherIsBetter);
+                    badgeA.className = classA;
+                    badgeB.className = classB;
+                }
+            };
+
+            updateBadge('shotsA', 'shotsB', stats.shotsA, stats.shotsB, true);
+            updateBadge('targetShotsA', 'targetShotsB', stats.targetShotsA, stats.targetShotsB, true);
+            updateBadge('possessionA', 'possessionB', `${stats.possessionA}%`, `${stats.possessionB}%`, true);
+            updateBadge('passesA', 'passesB', stats.passesA, stats.passesB, true);
+            updateBadge('precisionA', 'precisionB', `${stats.precisionA}%`, `${stats.precisionB}%`, true);
+            updateBadge('foulsA', 'foulsB', stats.foulsA, stats.foulsB, false);
+            updateBadge('yellowsA', 'yellowsB', stats.yellowsA, stats.yellowsB, false);
+            updateBadge('redsA', 'redsB', stats.redsA, stats.redsB, false);
+            updateBadge('offsidesA', 'offsidesB', stats.offsidesA, stats.offsidesB, false);
+            updateBadge('cornersA', 'cornersB', stats.cornersA, stats.cornersB, true);
+
+            // Atualiza Probabilidades
+            const lblA = statsPanel.querySelector(`[data-prob-val-a="${match.id}"]`);
+            const lblDraw = statsPanel.querySelector(`[data-prob-val-draw="${match.id}"]`);
+            const lblB = statsPanel.querySelector(`[data-prob-val-b="${match.id}"]`);
+            if (lblA) lblA.textContent = `${prob.pctA}%`;
+            if (lblDraw) lblDraw.textContent = `${prob.pctDraw}%`;
+            if (lblB) lblB.textContent = `${prob.pctB}%`;
+
+            const barA = statsPanel.querySelector(`[data-prob-bar-a="${match.id}"]`);
+            const barDraw = statsPanel.querySelector(`[data-prob-bar-draw="${match.id}"]`);
+            const barB = statsPanel.querySelector(`[data-prob-bar-b="${match.id}"]`);
+            if (barA) barA.style.width = `${prob.pctA}%`;
+            if (barDraw) barDraw.style.width = `${prob.pctDraw}%`;
+            if (barB) barB.style.width = `${prob.pctB}%`;
+        }
+    });
+
+    // 3. Histórico de gols
+    const historyContainer = document.querySelector('.match-history');
+    if (historyContainer && tournament.live.history.length) {
+        historyContainer.innerHTML = tournament.live.history.map(event =>
+            `<div class="match-item"><span>${event.minute}'</span><span>${event.message}</span><span></span></div>`
+        ).join('');
     }
 }
 
@@ -1737,12 +2187,13 @@ function startLiveMatch(mode) {
             }
         });
 
-        renderLiveKnockoutStage(mode);
+        // Atualização SEM PISCAR O DOM:
+        updateLiveDOM(mode);
 
         if (tournament.live.minute >= 90) {
             clearInterval(tournament.live.intervalId);
             tournament.live.inProgress = false;
-            tournament.live.matches.forEach((match, idx) => {
+            tournament.live.matches.forEach((match) => {
                 if (match.goalsA !== match.goalsB) {
                     match.winner = match.goalsA > match.goalsB ? match.teamA : match.teamB;
                 }
@@ -1759,7 +2210,14 @@ function renderPenaltyInterface(match, mode = match._mode) {
     const scoreB = penalties.attemptsB.filter(Boolean).length;
     const roundsA = [...penalties.attemptsA, ...Array(Math.max(0, 5 - penalties.attemptsA.length)).fill(null)].map(value => value === null ? '-' : value ? '1' : '0').join(' ');
     const roundsB = [...penalties.attemptsB, ...Array(Math.max(0, 5 - penalties.attemptsB.length)).fill(null)].map(value => value === null ? '-' : value ? '1' : '0').join(' ');
-    const status = penalties.winner ? `<div><strong>Vencedor nos pênaltis: ${penalties.winner.name}</strong></div>` : `<div><strong>Turno:</strong> ${penalties.turn}</div>`;
+    const isSuddenDeath = penalties.attemptsA.length >= 5 && penalties.attemptsB.length >= 5;
+    const currentRound = Math.max(penalties.attemptsA.length, penalties.attemptsB.length) + (penalties.turn === 'A' ? 1 : 0);
+    const shooterName = penalties.turn === 'A' ? match.teamA.name : match.teamB.name;
+    const status = penalties.winner
+        ? `<div><strong>Vencedor nos pênaltis: ${penalties.winner.name}</strong></div>`
+        : isSuddenDeath
+            ? `<div><strong>Morte Súbita (${currentRound}ª cobrança) - Turno: ${shooterName}</strong></div>`
+            : `<div><strong>Turno:</strong> ${shooterName}</div>`;
     
     const buttonHtml = penalties.winner
         ? '<div class="alert-box">Pênaltis concluídos.</div>'

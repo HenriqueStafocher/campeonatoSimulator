@@ -37,6 +37,17 @@ body::before {
     z-index: -1;
 }
 
+.logo {
+    display: block;
+    margin: -4rem auto;
+    width: clamp(180px, 28vw, 320px);
+    max-width: 90%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
+    transition: width 0.3s ease, transform 0.3s ease;
+}
+
 body {
     padding: 0 12px 24px;
 }
@@ -49,9 +60,12 @@ body {
 
 .topbar {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 16px 0;
+    padding: 16px 0 20px;
+    position: relative;
+    width: 100%;
     font-size: 1.2rem;
     letter-spacing: 0.08em;
     color: var(--text);
@@ -372,12 +386,41 @@ button.success {
     }
 
     .team-card {
-        padding: 12px 14px;
+        padding: 10px 12px;
     }
 
     .match-item {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .match-item > span:nth-child(1) {
+        flex: 1 1 38%;
+        text-align: right;
+        min-width: 0;
+    }
+
+    .match-item > span:nth-child(3) {
+        flex: 1 1 38%;
         text-align: left;
+        min-width: 0;
+    }
+
+    .match-item > span:nth-child(2),
+    .match-item > .score-badge {
+        flex: 0 0 auto;
+        text-align: center;
+    }
+
+    .match-item > button,
+    .match-item > .open-penalty,
+    .match-item > .penalty-panel {
+        width: 100%;
+        margin-top: 4px;
     }
 }
 
@@ -817,4 +860,406 @@ table.stats-table tr + tr td {
     flex-direction: column;
     gap: 8px;
     align-items: flex-end;
+}
+
+/* Campo de Busca de Times */
+.search-container {
+    margin-bottom: 16px;
+}
+
+.team-search-input {
+    width: 100%;
+    padding: 12px 18px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    color: var(--text);
+    font-size: 1.05rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.team-search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(58, 134, 255, 0.4);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.no-search-results {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 1rem;
+}
+
+/* ======================================================== 
+   PAINEL DE ESTATÍSTICAS E PROBABILIDADE DE VITÓRIA
+   ======================================================== */
+.btn-stats {
+    background-color: #f2d035 !important;
+    color: #0b0f19 !important;
+    font-weight: 700 !important;
+    border: none;
+    border-radius: 20px !important;
+    padding: 7px 16px !important;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.85rem !important;
+    letter-spacing: 0.04em;
+    box-shadow: 0 4px 12px rgba(242, 208, 53, 0.25);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-stats:hover {
+    background-color: #ffd83d !important;
+    box-shadow: 0 6px 16px rgba(242, 208, 53, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-stats:active {
+    transform: translateY(0);
+}
+
+.match-stats-panel {
+    background: #181c26;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    animation: fadeInSlide 0.3s ease-in-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-header-title {
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #e8eff9;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stats-table-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stats-row-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    padding: 4px 0;
+}
+
+.stats-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #d1d5db;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.stats-badge--highlight {
+    background: #ef476f !important;
+    color: #ffffff !important;
+}
+
+.stats-badge--neutral {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #d1d5db !important;
+}
+
+.stats-metric-name {
+    color: #9fb5d1;
+    text-align: center;
+    flex: 1;
+    font-size: 0.92rem;
+}
+
+/* Seção de Probabilidade de Vitória */
+.win-prob-section {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.win-prob-title {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.win-prob-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    color: #e8eff9;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.win-prob-bar-container {
+    display: flex;
+    height: 14px;
+    width: 100%;
+    border-radius: 7px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.win-prob-segment {
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.win-prob-segment--teamA {
+    background-color: #06d6a0; /* Verde */
+}
+
+.win-prob-segment--draw {
+    background-color: #ffffff; /* Branco */
+}
+
+.win-prob-segment--teamB {
+    background-color: #06d6a0; /* Verde */
+}
+
+/* ======================================================== 
+   MELHORIAS COMPLETA DE RESPONSIVIDADE (DESKTOP, TABLET, MOBILE)
+   ======================================================== */
+
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+}
+
+/* Breakpoint para Tablets e telas médias (<= 860px) */
+@media (max-width: 860px) {
+    .top-external-links {
+        position: static;
+        margin: 0 auto 16px auto;
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+/* Breakpoint para Dispositivos Móveis (<= 600px) */
+@media (max-width: 600px) {
+    body {
+        padding: 0 8px 16px;
+    }
+
+    .app-shell {
+        padding: 8px 0 24px;
+    }
+
+    .card {
+        padding: 16px 12px;
+        border-radius: 16px;
+    }
+
+    .title-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .title-group h1 {
+        font-size: 1.3rem;
+    }
+
+    .title-group h2 {
+        font-size: 1.2rem;
+    }
+
+    .title-group h3 {
+        font-size: 1.1rem;
+    }
+
+    .header-action-buttons {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .header-action-buttons button {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 0.88rem;
+    }
+
+    .button-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .league-btn {
+        font-size: 14px;
+        min-height: 3.2em;
+    }
+
+    .team-selection {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .team-card {
+        padding: 10px 10px;
+        gap: 6px;
+        border-radius: 14px;
+    }
+
+    .team-name {
+        font-size: 0.85rem;
+    }
+
+    .team-avatar {
+        width: 18px;
+        height: 18px;
+    }
+
+    .custom-checkbox {
+        width: 18px;
+        height: 18px;
+    }
+
+    .status-line {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .status-line > span {
+        text-align: center;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    .status-line > button {
+        width: 100%;
+    }
+
+    .group-table th,
+    .group-table td,
+    table.standings th,
+    table.standings td {
+        padding: 8px 6px;
+        font-size: 0.84rem;
+    }
+
+    .group-table table {
+        min-width: 360px;
+    }
+
+    table.standings {
+        min-width: 440px;
+    }
+
+    .match-stats-panel {
+        padding: 14px 10px;
+        margin-top: 10px;
+    }
+
+    .stats-header-title {
+        font-size: 0.92rem;
+    }
+
+    .stats-badge {
+        min-width: 32px;
+        height: 24px;
+        font-size: 0.8rem;
+        padding: 0 6px;
+    }
+
+    .stats-metric-name {
+        font-size: 0.82rem;
+    }
+
+    .win-prob-labels {
+        font-size: 0.8rem;
+    }
+
+    .win-prob-section {
+        margin-top: 16px;
+        padding-top: 14px;
+    }
+
+    .team-search-input {
+        padding: 10px 14px;
+        font-size: 0.95rem;
+        border-radius: 12px;
+    }
+
+    footer {
+        font-size: 0.95rem;
+        margin-top: 20px;
+    }
+}
+
+/* Breakpoint para Celulares Muito Pequenos (<= 380px) */
+@media (max-width: 380px) {
+    .button-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .league-btn {
+        font-size: 13px;
+        min-height: 3em;
+    }
+
+    .team-selection {
+        grid-template-columns: repeat(1, 1fr);
+    }
 }
