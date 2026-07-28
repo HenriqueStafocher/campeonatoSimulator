@@ -786,14 +786,14 @@ const leagueData = {
             { image: 'img/paraguai/lorenzo.svg', name: 'Club Sportivo San Lorenzo', strength: 79, nation: 'Paraguai' },
             { image: 'img/paraguai/caba.svg', name: 'General Caballero JLM', strength: 69, nation: 'Paraguai' },
             { image: 'img/paraguai/tembe.svg', name: 'Club Atlético Tembetary', strength: 68, nation: 'Paraguai' },
-            { image: 'img/paraguai/tacuary.svg', name: 'Tacuary', strength: 68, nation: 'Paraguai' }
+            { image: 'img/paraguai/tacuary.png', name: 'Tacuary', strength: 68, nation: 'Paraguai' }
         ]
     },
     peru: {
         label: 'Liga Peru',
         teams: [
             { image: 'img/peru/lima.svg', name: 'Alianza Lima', strength: 79, nation: 'Peru' },
-            { image: 'img/peru/universitario.svg', name: 'Universitario', strength: 78, nation: 'Peru' },
+            { image: 'img/peru/uni.svg', name: 'Universitario de Deportes', strength: 78, nation: 'Peru' },
             { image: 'img/peru/cristal.svg', name: 'Sporting Cristal', strength: 80, nation: 'Peru' },
             { image: 'img/peru/melgar.svg', name: 'Melgar', strength: 75, nation: 'Peru' },
             { image: 'img/peru/cienciano.svg', name: 'Cienciano', strength: 73, nation: 'Peru' },
@@ -823,7 +823,7 @@ const leagueData = {
             { image: 'img/uruguai/central.svg', name: 'Central Español', strength: 74, nation: 'Uruguai' },
             { image: 'img/uruguai/wanderer.svg', name: 'Wanderers', strength: 73, nation: 'Uruguai' },
             { image: 'img/uruguai/cerro.svg', name: 'Cerro', strength: 72, nation: 'Uruguai' },
-            { image: 'img/uruguai/liverpool.svg', name: 'Liverpool FC', strength: 77, nation: 'Uruguai' },
+            { image: 'img/uruguai/liver.svg', name: 'Liverpool FC', strength: 77, nation: 'Uruguai' },
             { image: 'img/uruguai/boston.svg', name: 'Boston River', strength: 73, nation: 'Uruguai' },
             { image: 'img/uruguai/juventud.svg', name: 'Juventud', strength: 71, nation: 'Uruguai' },
             { image: 'img/uruguai/maldonado.svg', name: 'Deportivo Maldonado', strength: 70, nation: 'Uruguai' },

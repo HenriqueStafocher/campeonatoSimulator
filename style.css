@@ -1263,3 +1263,183 @@ table.stats-table tr + tr td {
         grid-template-columns: repeat(1, 1fr);
     }
 }
+
+/* ======================================================== 
+   NOVO: Configuração de Campeonatos e Players
+   ======================================================== */
+.wizard-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+.wizard-btn {
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid transparent;
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+.wizard-btn:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+.wizard-btn.selected {
+    border-color: var(--accent);
+    background: rgba(58, 134, 255, 0.15);
+}
+
+.player-selector-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+    background: rgba(0,0,0,0.2);
+    padding: 14px;
+    border-radius: 18px;
+}
+.player-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid transparent;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.player-btn .player-color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+.player-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+.player-btn.active {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+}
+
+/* ======================================================== 
+   NOVO: Escudos 3x Maiores no Mata-Mata
+   ======================================================== */
+.knockout-list .team-avatar,
+.knockout-match-block .team-avatar,
+.match-stats-panel .team-avatar {
+    width: 60px !important;
+    height: 60px !important;
+    object-fit: contain;
+}
+
+.knockout-list .team-label,
+.knockout-match-block .team-label,
+.match-stats-panel .team-label {
+    flex-direction: column;
+    align-items: center !important;
+    gap: 10px;
+}
+.knockout-list .team-name,
+.knockout-match-block .team-name,
+.match-stats-panel .team-name {
+    font-size: 1.1rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.knockout-list .match-item,
+.knockout-match-block .match-item {
+    padding: 20px 16px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+}
+
+@media (max-width: 660px) {
+    .knockout-list .team-avatar,
+    .knockout-match-block .team-avatar,
+    .match-stats-panel .team-avatar {
+        width: 45px !important;
+        height: 45px !important;
+    }
+    .knockout-list .team-name,
+    .knockout-match-block .team-name,
+    .match-stats-panel .team-name {
+        font-size: 0.95rem;
+    }
+    .player-btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    .wizard-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* CSS para P1/P2 Badges */
+.player-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #fff;
+    margin-right: 8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Temporizador Individual (Match Timer) */
+.match-timer {
+    display: inline-block;
+    background: #111;
+    color: #00ff00;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    margin: 0 10px;
+    min-width: 65px;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.match-timer.finished {
+    color: #ff3333;
+    text-shadow: 0 0 5px rgba(255, 51, 51, 0.5);
+}
+
+/* Botão de Ocultar/Mostrar */
+.btn-toggle-panel {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 10px;
+}
+
+.btn-toggle-panel:hover {
+    background: var(--surface-light);
+    color: var(--text);
+}

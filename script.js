@@ -74,6 +74,7 @@ const leagueButtons = [
 const stages = {
     selection: 'selection',
     group: 'group',
+    trintaedoisavos: 'trintaedoisavos',
     dezesseisavos: 'dezesseisavos',
     oitavas: 'oitavas',
     quartas: 'quartas',
@@ -88,6 +89,19 @@ const state = {
     schedule: [],
     currentRound: 0,
     isScoresPanelOpen: false, 
+    multiplayer: {
+        numPlayers: 1,
+        activePlayer: 1,
+        playerAssignments: {}, 
+        colors: {
+            1: '#3a86ff', 
+            2: '#ffd60a', 
+            3: '#ff006e', 
+            4: '#06d6a0', 
+            5: '#9d4edd', 
+            6: '#ff6b6b'
+        }
+    },
     libertadores: {
         selectedIds: new Set(),
         pool: [],
@@ -112,7 +126,9 @@ const state = {
         live: null,
         champion: null,
         label: 'Personalizado',
-        targetSize: 32
+        targetSize: 32,
+        groupRounds: 6,
+        step: 'teamCount'
     },
     championsleague: {
         selectedIds: new Set(),
@@ -170,11 +186,15 @@ function renderTeamLabel(team, options = {}) {
     const imageMarkup = isTeamObject && team.image
         ? `<img src="${team.image}" alt="${teamName}" class="team-avatar" />`
         : '';
+        
+    const playerId = teamId ? state.multiplayer.playerAssignments[teamId] : null;
+    const playerColor = playerId ? state.multiplayer.colors[playerId] : null;
+    const styleAttr = playerColor ? ` style="color: ${playerColor}; font-weight: 700;"` : '';
 
     return `
         <span class="team-label">
             ${imageMarkup}
-            <span class="team-name${isHighlighted ? ' team-name--selected' : ''}">${teamName}</span>
+            <span class="team-name${isHighlighted ? ' team-name--selected' : ''}"${styleAttr}>${teamName}</span>
         </span>
     `;
 }
@@ -261,6 +281,100 @@ function renderTournamentStats(mode, expanded = false) {
     `;
 }
 
+function renderPlayerStatsTable(mode) {
+    if (state.multiplayer.numPlayers < 1) return '';
+    const numPlayers = state.multiplayer.numPlayers;
+    
+    const isLeague = !['libertadores', 'custom', 'worldCup', 'championsleague'].includes(mode);
+    const tournament = isLeague ? null : state[mode];
+    
+    const allTeams = isLeague ? state.leagueTeams : getTournamentTeamsForStats(mode);
+    
+    const rows = [];
+    for (let p = 1; p <= numPlayers; p++) {
+        const playerColor = state.multiplayer.colors[p];
+        const assignedIds = Object.entries(state.multiplayer.playerAssignments)
+            .filter(([id, pid]) => pid === p)
+            .map(([id, pid]) => id);
+            
+        if (assignedIds.length === 0) continue;
+        
+        let aliveCount = 0;
+        let goalsFor = 0;
+        let goalsAgainst = 0;
+        
+        assignedIds.forEach(id => {
+            const team = allTeams.find(t => t.id === id);
+            if (team) {
+                goalsFor += team.goalsFor || 0;
+                goalsAgainst += team.goalsAgainst || 0;
+            }
+        });
+        
+        if (isLeague) {
+            aliveCount = assignedIds.length;
+        } else {
+            if (tournament.knockout) {
+                if (tournament.knockout.stage === stages.champion) {
+                    aliveCount = assignedIds.includes(tournament.champion.id) ? 1 : 0;
+                } else {
+                    tournament.knockout.matches.forEach(m => {
+                        if (assignedIds.includes(m.teamA.id)) aliveCount++;
+                        if (assignedIds.includes(m.teamB.id)) aliveCount++;
+                    });
+                }
+            } else {
+                let stillAlive = 0;
+                assignedIds.forEach(id => {
+                    const team = tournament.selectedTeams?.find(t => t.id === id);
+                    if (team) stillAlive++;
+                });
+                aliveCount = stillAlive;
+            }
+        }
+        
+        rows.push({ p, playerColor, aliveCount, goalsFor, goalsAgainst });
+    }
+    
+    if (rows.length === 0) return '';
+    
+    rows.sort((a, b) => b.aliveCount - a.aliveCount || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst));
+    
+    const htmlRows = rows.map(r => `
+        <tr>
+            <td data-label="Player"><span class="player-badge" style="background: ${r.playerColor}">P${r.p}</span></td>
+            <td data-label="Times Vivos">${r.aliveCount}</td>
+            <td data-label="Gols Feitos">${r.goalsFor}</td>
+            <td data-label="Gols Sofridos">${r.goalsAgainst}</td>
+        </tr>
+    `).join('');
+    
+    return `
+        <section class="card section-panel stats-panel">
+            <div class="title-group" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="display: inline-block;">Acompanhamento de Jogadores</h3>
+                    <button class="btn-toggle-panel toggle-player-stats">OCULTAR</button>
+                    <p class="description">Desempenho total dos times escolhidos por cada player.</p>
+                </div>
+            </div>
+            <div class="table-wrapper player-stats-wrapper">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Times Vivos</th>
+                            <th>Gols Feitos</th>
+                            <th>Gols Sofridos</th>
+                        </tr>
+                    </thead>
+                    <tbody>${htmlRows}</tbody>
+                </table>
+            </div>
+        </section>
+    `;
+}
+
 function renderMainScreen() {
     state.isScoresPanelOpen = false;
 
@@ -293,23 +407,200 @@ function renderMainScreen() {
 }
 
 function handleLeagueChoice(key) {
-    if (key === 'libertadores') {
-        setupTournamentSelection('libertadores');
-        return;
+    state.leagueKey = key;
+    renderPlayerCountSelection(key);
+}
+
+function renderPlayerCountSelection(key) {
+    const isCustom = key === 'custom';
+    
+    app.innerHTML = `
+        <section class="card">
+            <div class="title-group">
+                <div>
+                    <h2>Configuração: Quantos jogadores irão participar?</h2>
+                    <p class="description">Escolha quantos players vão escolher times neste modo.</p>
+                </div>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                </div>
+            </div>
+            <div class="wizard-options">
+                <button class="wizard-btn" data-players="1">1 Player</button>
+                <button class="wizard-btn" data-players="2">2 Players</button>
+                <button class="wizard-btn" data-players="3">3 Players</button>
+                <button class="wizard-btn" data-players="4">4 Players</button>
+                <button class="wizard-btn" data-players="5">5 Players</button>
+                <button class="wizard-btn" data-players="6">6 Players</button>
+            </div>
+        </section>
+    `;
+
+    document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    
+    app.querySelectorAll('.wizard-btn[data-players]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.multiplayer.numPlayers = Number(btn.getAttribute('data-players'));
+            state.multiplayer.activePlayer = 1;
+            state.multiplayer.playerAssignments = {};
+            
+            if (isCustom) {
+                renderCustomTeamCountSelection();
+            } else {
+                setupLeagueOrTournament(key);
+            }
+        });
+    });
+}
+
+function renderCustomTeamCountSelection() {
+    app.innerHTML = `
+        <section class="card">
+            <div class="title-group">
+                <div>
+                    <h2>Configuração: Quantos times seu campeonato terá?</h2>
+                </div>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar</button>
+                </div>
+            </div>
+            <div class="wizard-options">
+                <button class="wizard-btn" data-teams="16">16 times (Mata-mata direto)</button>
+                <button class="wizard-btn" data-teams="32">32 times (8 grupos)</button>
+                <button class="wizard-btn" data-teams="48">48 times (12 grupos)</button>
+                <button class="wizard-btn" data-teams="64">64 times (16 grupos)</button>
+                <button class="wizard-btn" data-teams="128">128 times (32 grupos)</button>
+            </div>
+        </section>
+    `;
+    
+    document.getElementById('backButton').addEventListener('click', () => renderPlayerCountSelection('custom'));
+    
+    app.querySelectorAll('.wizard-btn[data-teams]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const teams = Number(btn.getAttribute('data-teams'));
+            state.custom.targetSize = teams;
+            
+            if (teams === 16) {
+                state.custom.groupRounds = 0;
+                setupLeagueOrTournament('custom');
+            } else {
+                renderCustomGroupRoundsSelection();
+            }
+        });
+    });
+}
+
+function renderCustomGroupRoundsSelection() {
+    app.innerHTML = `
+        <section class="card">
+            <div class="title-group">
+                <div>
+                    <h2>Configuração: Quantas rodadas terá a fase de grupos?</h2>
+                </div>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar</button>
+                </div>
+            </div>
+            <div class="wizard-options">
+                <button class="wizard-btn" data-rounds="3">3 rodadas</button>
+                <button class="wizard-btn" data-rounds="6">6 rodadas (Ida e volta)</button>
+            </div>
+        </section>
+    `;
+    
+    document.getElementById('backButton').addEventListener('click', renderCustomTeamCountSelection);
+    
+    app.querySelectorAll('.wizard-btn[data-rounds]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.custom.groupRounds = Number(btn.getAttribute('data-rounds'));
+            setupLeagueOrTournament('custom');
+        });
+    });
+}
+
+function setupLeagueOrTournament(key) {
+    if (['libertadores', 'custom', 'worldCup', 'championsleague'].includes(key)) {
+        setupTournamentSelection(key);
+    } else {
+        setupLeagueAssignment(key);
     }
-    if (key === 'custom') {
-        setupTournamentSelection('custom');
-        return;
+}
+
+function setupLeagueAssignment(key) {
+    const league = leagueData[key];
+    state.leagueTeams = createChampionshipTeams(league.teams);
+    state.leagueTeams.forEach((t, i) => t.id = `league-${key}-${i}`);
+    renderLeagueAssignment(key);
+}
+
+function renderLeagueAssignment(key) {
+    const league = leagueData[key];
+    
+    let playerButtons = '';
+    for(let i=1; i<=state.multiplayer.numPlayers; i++) {
+        const isActive = i === state.multiplayer.activePlayer ? ' active' : '';
+        const color = state.multiplayer.colors[i];
+        playerButtons += `<button class="player-btn${isActive}" data-select-player="${i}">
+            <div class="player-color-dot" style="background: ${color}"></div> Player ${i}
+        </button>`;
     }
-    if (key === 'worldCup') {
-        setupTournamentSelection('worldCup');
-        return;
-    }
-    if (key === 'championsleague') {
-        setupTournamentSelection('championsleague');
-        return;
-    }
-    renderLeagueSimulator(key);
+    
+    const items = state.leagueTeams.map(team => {
+        const playerId = state.multiplayer.playerAssignments[team.id];
+        const isHighlighted = !!playerId;
+        const playerColor = playerId ? state.multiplayer.colors[playerId] : null;
+        const styleAttr = playerColor ? ` style="border-color: ${playerColor}; box-shadow: 0 0 0 2px ${playerColor} inset;"` : '';
+        
+        return `
+            <div class="team-card${isHighlighted ? ' team-card--selected' : ''}" data-id="${team.id}"${styleAttr}>
+                ${renderTeamLabel(team)}
+            </div>
+        `;
+    }).join('');
+
+    app.innerHTML = `
+        <section class="card">
+            <div class="title-group">
+                <div>
+                    <h2>${league.label} - Atribuir Times</h2>
+                    <p class="description">Clique nos times para atribuí-los ao Player selecionado. Quando terminar, clique em Iniciar Liga.</p>
+                </div>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                    <button id="startLeagueBtn" class="success">Iniciar Liga</button>
+                </div>
+            </div>
+            ${state.multiplayer.numPlayers > 1 ? `<div class="player-selector-bar">${playerButtons}</div>` : ''}
+        </section>
+        <div class="section-panel team-selection">${items}</div>
+    `;
+    
+    document.getElementById('backButton').addEventListener('click', renderMainScreen);
+    document.getElementById('startLeagueBtn').addEventListener('click', () => {
+        renderLeagueSimulator(key);
+    });
+    
+    app.querySelectorAll('.player-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.multiplayer.activePlayer = Number(btn.getAttribute('data-select-player'));
+            renderLeagueAssignment(key);
+        });
+    });
+    
+    app.querySelectorAll('.team-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const id = card.getAttribute('data-id');
+            const currentOwner = state.multiplayer.playerAssignments[id];
+            
+            if (currentOwner === state.multiplayer.activePlayer) {
+                delete state.multiplayer.playerAssignments[id];
+            } else {
+                state.multiplayer.playerAssignments[id] = state.multiplayer.activePlayer;
+            }
+            renderLeagueAssignment(key);
+        });
+    });
 }
 
 function setupTournamentSelection(mode) {
@@ -330,7 +621,13 @@ function setupTournamentSelection(mode) {
     tournament.knockout = null;
     tournament.live = null;
     tournament.champion = null;
-    tournament.targetSize = mode === 'worldCup' ? 48 : 32;
+    
+    if (mode === 'custom' && state.custom.targetSize) {
+        tournament.targetSize = state.custom.targetSize;
+    } else {
+        tournament.targetSize = mode === 'worldCup' ? 48 : 32;
+    }
+    
     renderTournamentSelection(mode);
 }
 
@@ -380,6 +677,9 @@ function buildChampionsLeaguePool() {
 }
 
 function getMaxGroupRounds(mode) {
+    if (mode === 'custom' && state.custom.groupRounds) {
+        return state.custom.groupRounds;
+    }
     return mode === 'libertadores' ? 3 : 6;
 }
 
@@ -419,7 +719,16 @@ function renderTournamentSelection(mode) {
     const startDisabled = selectedCount !== targetSize;
     const description = mode === 'worldCup'
         ? `Selecione ${targetSize} países para montar a Copa do Mundo. Use o botão RANDOM para completar automaticamente.`
-        : `Selecione ${targetSize} times para montar um campeonato personalizado. Use o botão RANDOM para completar automaticamente.`;
+        : `Selecione ${targetSize} times para montar o campeonato. Use o botão RANDOM para completar automaticamente.`;
+
+    let playerButtons = '';
+    for(let i=1; i<=state.multiplayer.numPlayers; i++) {
+        const isActive = i === state.multiplayer.activePlayer ? ' active' : '';
+        const color = state.multiplayer.colors[i];
+        playerButtons += `<button class="player-btn${isActive}" data-select-player="${i}">
+            <div class="player-color-dot" style="background: ${color}"></div> Player ${i}
+        </button>`;
+    }
 
     app.innerHTML = `
         <section class="card">
@@ -433,10 +742,11 @@ function renderTournamentSelection(mode) {
                     <button id="restartButton" class="danger">Recomeçar</button>
                 </div>
             </div>
+            ${state.multiplayer.numPlayers > 1 ? `<div class="player-selector-bar">${playerButtons}</div>` : ''}
             <div class="status-line">
                 <span>Times selecionados: <strong>${selectedCount}</strong> / ${targetSize}</span>
                 <button id="randomFill" class="success">Randomizar times restantes</button>
-                <button id="startGroups" class="success" ${startDisabled ? 'disabled' : ''}>Fase de Grupos</button>
+                <button id="startGroups" class="success" ${startDisabled ? 'disabled' : ''}>Iniciar Campeonato</button>
             </div>
         </section>
         <div class="search-container">
@@ -509,6 +819,15 @@ function renderTournamentSelection(mode) {
         }
     }
 
+    if (state.multiplayer.numPlayers > 1) {
+        app.querySelectorAll('.player-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.multiplayer.activePlayer = Number(btn.getAttribute('data-select-player'));
+                renderTournamentSelection(mode);
+            });
+        });
+    }
+
     app.querySelectorAll('input[type=checkbox][data-id]').forEach(input => {
         input.addEventListener('change', () => {
             const id = input.dataset.id;
@@ -519,9 +838,11 @@ function renderTournamentSelection(mode) {
                 }
                 tournament.selectedIds.add(id);
                 tournament.manualSelectedIds.add(id);
+                state.multiplayer.playerAssignments[id] = state.multiplayer.activePlayer;
             } else {
                 tournament.selectedIds.delete(id);
                 tournament.manualSelectedIds.delete(id);
+                delete state.multiplayer.playerAssignments[id];
             }
             renderTournamentSelection(mode);
         });
@@ -1131,13 +1452,28 @@ function startTournamentGroupStage(mode) {
     if (!selected || selected.length !== targetSize) {
         return;
     }
+
+    if (mode === 'custom' && tournament.groupRounds === 0) {
+        let stage;
+        if (targetSize === 128) stage = stages.trintaedoisavos;
+        else if (targetSize === 64) stage = stages.trintaedoisavos;
+        else if (targetSize === 32) stage = stages.dezesseisavos;
+        else if (targetSize === 16) stage = stages.oitavas;
+        else stage = stages.oitavas;
+        
+        const shuffled = shuffle(selected);
+        tournament.knockout = createKnockoutStage(stage, shuffled);
+        renderTournamentKnockout(mode);
+        return;
+    }
+
     const shuffled = shuffle(selected);
-    const groupCount = mode === 'worldCup' ? 12 : 8;
+    const groupCount = targetSize / 4;
     const teamsPerGroup = 4;
     const groups = [];
     for (let index = 0; index < groupCount; index += 1) {
         groups.push({
-            name: String.fromCharCode(65 + index),
+            name: groupCount > 26 ? String(index + 1) : String.fromCharCode(65 + index),
             teams: shuffled.slice(index * teamsPerGroup, index * teamsPerGroup + teamsPerGroup).map(team => ({
                 ...team,
                 strength: getEffectiveStrength(team),
@@ -1245,13 +1581,17 @@ function renderTournamentGroupStage(mode) {
             <div class="status-line">
                 <span>Rodada atual: <strong>${displayRound}</strong> / ${maxRounds}</span>
                 <button id="advanceRound" class="success" ${canAdvance ? '' : 'disabled'}>Avancar rodada</button>
-                ${showOitavas ? '<button id="goOitavas" class="success">Oitavas</button>' : ''}
+                ${showOitavas ? '<button id="goOitavas" class="success">Ir para o Mata-mata</button>' : ''}
             </div>
         </section>
+        ${renderPlayerStatsTable(mode)}
         <section class="group-grid">${groupsHtml}</section>
         <section class="card section-panel">
-            <h3>Histórico de jogos</h3>
-            <div class="table-wrapper">
+            <div class="title-group" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="display: inline-block;">Histórico de jogos</h3>
+                <button class="btn-toggle-panel toggle-history-stats">OCULTAR</button>
+            </div>
+            <div class="table-wrapper history-wrapper">
                 <table class="history-table">
                     <thead>
                         <tr>
@@ -1278,13 +1618,15 @@ function renderTournamentGroupStage(mode) {
         renderTournamentGroupStage(mode);
     });
     if (showOitavas) {
-        document.getElementById('goOitavas').addEventListener('click', () => startTournamentOitavas(mode));
+        document.getElementById('goOitavas').addEventListener('click', () => startTournamentKnockout(mode));
     }
 }
 
 function getQualifiedTeamsForKnockout(mode) {
     const tournament = state[mode];
-    if (mode === 'worldCup') {
+    const groupCount = tournament.groups.length;
+
+    if (groupCount === 12) { // 48 teams
         const firstTwo = tournament.groups.flatMap(group => getGroupStandings(group).slice(0, 2));
         const thirdPlaces = tournament.groups
             .map(group => getGroupStandings(group)[2])
@@ -1344,10 +1686,16 @@ function advanceTournamentGroupRound(mode) {
     tournament.groupRound += 1;
 }
 
-function startTournamentOitavas(mode) {
+function startTournamentKnockout(mode) {
     const tournament = state[mode];
     const qualified = getQualifiedTeamsForKnockout(mode);
-    const stage = mode === 'worldCup' ? stages.dezesseisavos : stages.oitavas;
+    let stage;
+    if (qualified.length === 64) stage = stages.trintaedoisavos;
+    else if (qualified.length === 32) stage = stages.dezesseisavos;
+    else if (qualified.length === 16) stage = stages.oitavas;
+    else if (qualified.length === 8) stage = stages.quartas;
+    else stage = stages.oitavas;
+    
     tournament.knockout = createKnockoutStage(stage, qualified);
     renderTournamentKnockout(mode);
 }
@@ -1371,11 +1719,7 @@ function renderTournamentKnockout(mode) {
         return renderChampionScreen(mode);
     }
     
-    if (stage === stages.quartas || stage === stages.semi || stage === stages.final) {
-        return renderLiveKnockoutStage(mode);
-    }
-
-    renderKnockoutStage(mode);
+    return renderLiveKnockoutStage(mode);
 }
 
 function renderKnockoutStage(mode) {
@@ -1528,7 +1872,9 @@ function simulateKnockoutStage(mode) {
 function advanceKnockoutStage(mode) {
     const knockout = state[mode].knockout;
     const winners = knockout.matches.map(match => match.winner).filter(Boolean);
-    if (knockout.stage === stages.dezesseisavos) {
+    if (knockout.stage === stages.trintaedoisavos) {
+        state[mode].knockout = createKnockoutStage(stages.dezesseisavos, winners);
+    } else if (knockout.stage === stages.dezesseisavos) {
         state[mode].knockout = createKnockoutStage(stages.oitavas, winners);
     } else if (knockout.stage === stages.oitavas) {
         state[mode].knockout = createKnockoutStage(stages.quartas, winners);
@@ -1899,14 +2245,15 @@ function renderLiveKnockoutStage(mode) {
     const tournament = state[mode];
     const { stage, matches } = tournament.knockout;
     let title = 'Fase Final';
-    if (stage === stages.quartas) title = 'Quartas de Final';
+    if (stage === stages.trintaedoisavos) title = '32avos de Final';
+    else if (stage === stages.dezesseisavos) title = '16avos de Final';
+    else if (stage === stages.oitavas) title = 'Oitavas de Final';
+    else if (stage === stages.quartas) title = 'Quartas de Final';
     else if (stage === stages.semi) title = 'Semifinal';
     else if (stage === stages.final) title = 'Final';
 
     if (stage === stages.final && matches.every(match => match.winner)) {
         tournament.champion = matches[0].winner;
-        renderChampionScreen(mode);
-        return;
     }
 
     if (!tournament.live || tournament.live.stage !== stage) {
@@ -1920,7 +2267,6 @@ function renderLiveKnockoutStage(mode) {
         };
     }
 
-    const isQuarterOrLater = [stages.quartas, stages.semi, stages.final].includes(stage);
     const allMatchesFinished = tournament.live.matches.every(match => match.winner);
     
     const matchRows = tournament.live.matches.map((match, idx) => {
@@ -1934,7 +2280,7 @@ function renderLiveKnockoutStage(mode) {
         const result = match.winner ? ` - Vencedor: ${match.winner.name}` : '';
         let penaltyPart = '';
         
-        if (!match.winner && match.goalsA !== null && match.goalsB !== null && match.goalsA === match.goalsB && match.minute >= 90) {
+        if (!match.winner && match.goalsA !== null && match.goalsB !== null && match.goalsA === match.goalsB && match.seconds >= 5400) {
             if (!match.penalties) {
                 penaltyPart = `<button data-open-live-penalty="${match.id}" class="secondary open-live-penalty">PÊNALTIS</button>`;
             } else {
@@ -1944,17 +2290,20 @@ function renderLiveKnockoutStage(mode) {
             }
         }
 
-        const statsBtn = isQuarterOrLater
-            ? `<button data-toggle-match-stats="${match.id}" class="btn-stats toggle-match-stats">${match.showStats ? 'OCULTAR' : 'ESTATÍSTICAS'}</button>`
-            : '';
+        const statsBtn = `<button data-toggle-match-stats="${match.id}" class="btn-stats toggle-match-stats">${match.showStats ? 'OCULTAR' : 'ESTATÍSTICAS'}</button>`;
 
-        const statsPanelHtml = (isQuarterOrLater && match.showStats) ? renderLiveMatchStatsPanel(match, mode) : '';
+        const statsPanelHtml = match.showStats ? renderLiveMatchStatsPanel(match, mode) : '';
+
+        const formattedTimer = formatMatchTimer(match.seconds || 0);
 
         return `
             <div class="knockout-match-block" id="match-block-${match.id}">
                 <div class="match-item">
                     <span>${renderTeamLabel(match.teamA, { mode })}</span>
-                    <span id="score-display-${match.id}">${score}</span>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;">
+                        <span id="score-display-${match.id}" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 4px;">${score}</span>
+                        <div id="timer-${match.id}" class="match-timer ${(match.seconds || 0) >= 5400 ? 'finished' : ''}">${formattedTimer}</div>
+                    </div>
                     <span>${renderTeamLabel(match.teamB, { mode })}</span>
                     ${result}
                     ${penaltyPart}
@@ -1969,9 +2318,12 @@ function renderLiveKnockoutStage(mode) {
 
     let nextStageButton = '';
     if (allMatchesFinished) {
-        if (stage === stages.quartas) nextStageButton = '<button id="goNext" class="success">Ir para Semifinal</button>';
+        if (stage === stages.trintaedoisavos) nextStageButton = '<button id="goNext" class="success">Ir para 16avos</button>';
+        else if (stage === stages.dezesseisavos) nextStageButton = '<button id="goNext" class="success">Ir para Oitavas</button>';
+        else if (stage === stages.oitavas) nextStageButton = '<button id="goNext" class="success">Ir para Quartas</button>';
+        else if (stage === stages.quartas) nextStageButton = '<button id="goNext" class="success">Ir para Semifinal</button>';
         else if (stage === stages.semi) nextStageButton = '<button id="goNext" class="success">Ir para Final</button>';
-        else if (stage === stages.final) nextStageButton = '<button id="goNext" class="success">Ver Campeão</button>';
+        else if (stage === stages.final) nextStageButton = '<button id="goNext" class="success" style="background-color: gold; color: black; font-weight: bold; border: 2px solid #b8860b;">LEVANTAR TROFÉU 🏆</button>';
     }
 
     app.innerHTML = `
@@ -1987,17 +2339,20 @@ function renderLiveKnockoutStage(mode) {
                 </div>
             </div>
             <div class="status-line">
-                <span>Tempo: <strong id="live-minute-display">${tournament.live.minute}'</strong></span>
                 <button id="startLiveMatch" class="success">Iniciar partidas</button>
                 ${nextStageButton}
             </div>
         </section>
+        ${renderPlayerStatsTable(mode)}
         <section class="knockout-list section-panel">${matchRows}</section>
         <section class="card section-panel">
-            <h3>Histórico de gols</h3>
-            <div class="match-history">${historyRows}</div>
+            <div class="title-group" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="display: inline-block;">Histórico de gols</h3>
+                <button class="btn-toggle-panel toggle-history-stats">OCULTAR</button>
+            </div>
+            <div class="match-history history-wrapper">${historyRows}</div>
         </section>
-        ${renderTournamentStats(mode, false)}
+        ${renderTournamentStats(mode, true)}
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
@@ -2051,29 +2406,24 @@ function renderLiveKnockoutStage(mode) {
 
     if (allMatchesFinished && document.getElementById('goNext')) {
         document.getElementById('goNext').addEventListener('click', () => {
-            if (stage === stages.quartas) {
-                tournament.knockout = { stage: stages.semi, matches: createBracketPairs(tournament.live.matches.map(m => m.winner)) };
-            } else if (stage === stages.semi) {
-                tournament.knockout = { stage: stages.final, matches: createBracketPairs(tournament.live.matches.map(m => m.winner)) };
-            } else if (stage === stages.final) {
-                tournament.champion = tournament.live.matches[0].winner;
-                tournament.knockout = { stage: stages.champion };
-            }
+            advanceKnockoutStage(mode);
             tournament.live = null;
             renderTournamentKnockout(mode);
         });
     }
 }
 
+function formatMatchTimer(totalSeconds) {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
 function updateLiveDOM(mode) {
     const tournament = state[mode];
     if (!tournament || !tournament.live) return;
 
-    // 1. Relógio do tempo
-    const minEl = document.getElementById('live-minute-display');
-    if (minEl) minEl.textContent = `${tournament.live.minute}'`;
-
-    // 2. Placar e Painéis de estatísticas em tempo real (SEM PISCAR)
+    // Placar, Tempo e Painéis de estatísticas em tempo real (SEM PISCAR)
     tournament.live.matches.forEach(match => {
         const scoreEl = document.getElementById(`score-display-${match.id}`);
         if (scoreEl) {
@@ -2084,6 +2434,14 @@ function updateLiveDOM(mode) {
                 scoreText += ` (${scorePenA}x${scorePenB} pen)`;
             }
             scoreEl.textContent = scoreText;
+        }
+
+        const timerEl = document.getElementById(`timer-${match.id}`);
+        if (timerEl) {
+            timerEl.textContent = formatMatchTimer(match.seconds || 0);
+            if ((match.seconds || 0) >= 5400) {
+                timerEl.classList.add('finished');
+            }
         }
 
         // Se o painel de estatísticas da partida estiver aberto, atualiza APENAS os valores
@@ -2155,42 +2513,49 @@ function startLiveMatch(mode) {
         match.goalsA = 0;
         match.goalsB = 0;
         match.minute = 0;
+        match.seconds = 0;
         match.penalties = null;
         match.winner = null;
     });
 
     tournament.live.intervalId = setInterval(() => {
-        tournament.live.minute += 1;
+        let allFinished = true;
         
         tournament.live.matches.forEach(match => {
-            match.minute = tournament.live.minute;
+            if (match.seconds >= 5400) return;
+            allFinished = false;
+            
+            match.seconds += Math.floor(Math.random() * 12) + 4;
+            if (match.seconds > 5400) match.seconds = 5400;
+            match.minute = Math.floor(match.seconds / 60);
+
             const strengthA = match.teamA.strength || 50;
             const strengthB = match.teamB.strength || 50;
             
-            let chanceA = 0.012 + (strengthA / 10000) + ((strengthA - strengthB) / 4000);
-            let chanceB = 0.012 + (strengthB / 10000) + ((strengthB - strengthA) / 4000);
+            let chanceA = (0.012 + (strengthA / 10000) + ((strengthA - strengthB) / 4000)) / 6;
+            let chanceB = (0.012 + (strengthB / 10000) + ((strengthB - strengthA) / 4000)) / 6;
             
-            chanceA = Math.max(0.005, Math.min(0.06, chanceA));
-            chanceB = Math.max(0.005, Math.min(0.06, chanceB));
+            chanceA = Math.max(0.001, Math.min(0.015, chanceA));
+            chanceB = Math.max(0.001, Math.min(0.015, chanceB));
             
             if (Math.random() < chanceA) {
                 match.goalsA += 1;
                 updateTeamStats(match.teamA, 1, 0);
                 updateTeamStats(match.teamB, 0, 1);
-                tournament.live.history.unshift({ minute: tournament.live.minute, message: `${match.teamA.name} marcou!` });
+                tournament.live.history.unshift({ minute: match.minute, message: `${match.teamA.name} marcou!` });
             }
             if (Math.random() < chanceB) {
                 match.goalsB += 1;
                 updateTeamStats(match.teamB, 1, 0);
                 updateTeamStats(match.teamA, 0, 1);
-                tournament.live.history.unshift({ minute: tournament.live.minute, message: `${match.teamB.name} marcou!` });
+                tournament.live.history.unshift({ minute: match.minute, message: `${match.teamB.name} marcou!` });
             }
         });
 
         // Atualização SEM PISCAR O DOM:
         updateLiveDOM(mode);
 
-        if (tournament.live.minute >= 90) {
+        if (allFinished) {
             clearInterval(tournament.live.intervalId);
             tournament.live.inProgress = false;
             tournament.live.matches.forEach((match) => {
@@ -2200,7 +2565,7 @@ function startLiveMatch(mode) {
             });
             renderLiveKnockoutStage(mode);
         }
-    }, 1000);
+    }, 120);
 }
 
 function renderPenaltyInterface(match, mode = match._mode) {
@@ -2242,19 +2607,19 @@ function renderChampionScreen(mode) {
         <section class="card">
             <div class="title-group">
                 <div>
-                    <h2>Campeão do ${state[mode].label}</h2>
-                    <p class="description">A final foi concluida e o torneio ja tem um campeão.</p>
+                    <h2>🏆 Campeão 🏆</h2>
+                    <p class="description">Parabens ao time que venceu a final.</p>
                 </div>
                 <div class="header-action-buttons">
                     <button id="backButton" class="secondary">Voltar ao menu</button>
                     <button id="restartButton" class="danger">Recomeçar</button>
                 </div>
             </div>
-            <div class="section-panel">
-                <h3>${state[mode].champion ? renderTeamLabel(state[mode].champion, { mode }) : 'Ainda sem campeão'}</h3>
-                <p class="description">Parabens ao time que venceu a final.</p>
+            <div class="champion-display">
+                ${renderTeamLabel(state[mode].champion, { mode, large: true })}
             </div>
         </section>
+        ${renderPlayerStatsTable(mode)}
         ${renderTournamentStats(mode, true)}
     `;
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
@@ -2274,3 +2639,22 @@ if (document.readyState === 'loading') {
 } else {
     initApp();
 }
+
+// Global Toggle Handlers
+document.addEventListener('click', (e) => {
+    if (e.target.matches('.toggle-history-stats')) {
+        const wrapper = e.target.closest('.section-panel').querySelector('.history-wrapper');
+        if (wrapper) {
+            const isHidden = wrapper.style.display === 'none';
+            wrapper.style.display = isHidden ? '' : 'none';
+            e.target.textContent = isHidden ? 'OCULTAR' : 'MOSTRAR';
+        }
+    } else if (e.target.matches('.toggle-player-stats')) {
+        const wrapper = e.target.closest('.section-panel').querySelector('.player-stats-wrapper');
+        if (wrapper) {
+            const isHidden = wrapper.style.display === 'none';
+            wrapper.style.display = isHidden ? '' : 'none';
+            e.target.textContent = isHidden ? 'OCULTAR' : 'MOSTRAR';
+        }
+    }
+});
