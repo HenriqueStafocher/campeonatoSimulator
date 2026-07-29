@@ -100,7 +100,8 @@ const state = {
             4: '#06d6a0', 
             5: '#9d4edd', 
             6: '#ff6b6b'
-        }
+        },
+        leaguePoints: JSON.parse(localStorage.getItem('multiplayerLeaguePoints')) || {1:0, 2:0, 3:0, 4:0, 5:0, 6:0}
     },
     libertadores: {
         selectedIds: new Set(),
@@ -239,41 +240,99 @@ function getTournamentTeamsForStats(mode) {
 function renderTournamentStats(mode, expanded = false) {
     const teams = getTournamentTeamsForStats(mode);
     if (!teams.length) return '';
-
-    const sortedTeams = [...teams].sort((a, b) => {
-        const goalsDiff = (b.goalsFor || 0) - (a.goalsFor || 0);
-        if (goalsDiff !== 0) return goalsDiff;
-        return (a.goalsAgainst || 0) - (b.goalsAgainst || 0);
+    
+    // Fallback initialize
+    teams.forEach(t => {
+        if (t.yellows === undefined) t.yellows = 0;
+        if (t.reds === undefined) t.reds = 0;
+        if (t.fouls === undefined) t.fouls = 0;
+        if (t.shots === undefined) t.shots = 0;
+        if (t.penaltiesScored === undefined) t.penaltiesScored = 0;
+        if (t.penaltiesMissed === undefined) t.penaltiesMissed = 0;
     });
 
-    const rows = sortedTeams.map(team => `
-        <tr>
+    const activeTab = state.activeStatsTab || 'goals';
+
+    let sortedTeams = [];
+    let thead = '';
+    let rowMapper = null;
+
+    if (activeTab === 'goals') {
+        sortedTeams = [...teams].sort((a, b) => {
+            const goalsDiff = (b.goalsFor || 0) - (a.goalsFor || 0);
+            if (goalsDiff !== 0) return goalsDiff;
+            return (a.goalsAgainst || 0) - (b.goalsAgainst || 0);
+        });
+        thead = `<tr><th>Time</th><th>Gols (GP)</th><th>Sofridos (GC)</th>${expanded ? '<th>Saldo</th><th>Pts</th>' : ''}</tr>`;
+        rowMapper = team => `<tr>
             <td data-label="Time">${renderTeamLabel(team, { mode })}</td>
             <td data-label="GP">${team.goalsFor || 0}</td>
             <td data-label="GC">${team.goalsAgainst || 0}</td>
             ${expanded ? `<td data-label="SG">${team.goalsFor - team.goalsAgainst}</td>` : ''}
             ${expanded ? `<td data-label="PTS">${team.points || 0}</td>` : ''}
-        </tr>
-    `).join('');
+        </tr>`;
+    } else if (activeTab === 'cards') {
+        sortedTeams = [...teams].sort((a, b) => (b.reds - a.reds) || (b.yellows - a.yellows) || (b.fouls - a.fouls));
+        thead = `<tr><th>Time</th><th>🟥 Vermelhos</th><th>🟨 Amarelos</th><th>Faltas</th></tr>`;
+        rowMapper = team => `<tr>
+            <td data-label="Time">${renderTeamLabel(team, { mode })}</td>
+            <td data-label="Vermelhos">${team.reds}</td>
+            <td data-label="Amarelos">${team.yellows}</td>
+            <td data-label="Faltas">${team.fouls}</td>
+        </tr>`;
+    } else if (activeTab === 'penalties') {
+        sortedTeams = [...teams].sort((a, b) => (b.penaltiesScored - a.penaltiesScored) || (a.penaltiesMissed - b.penaltiesMissed));
+        thead = `<tr><th>Time</th><th>✅ Convertidos</th><th>❌ Perdidos</th></tr>`;
+        rowMapper = team => `<tr>
+            <td data-label="Time">${renderTeamLabel(team, { mode })}</td>
+            <td data-label="Convertidos">${team.penaltiesScored}</td>
+            <td data-label="Perdidos">${team.penaltiesMissed}</td>
+        </tr>`;
+    } else if (activeTab === 'shots') {
+        sortedTeams = [...teams].sort((a, b) => (b.shots - a.shots) || (a.goalsAgainst - b.goalsAgainst));
+        thead = `<tr><th>Time</th><th>🎯 Finalizações</th><th>🛡️ Defesas (Menos Gols Sofridos)</th></tr>`;
+        rowMapper = team => `<tr>
+            <td data-label="Time">${renderTeamLabel(team, { mode })}</td>
+            <td data-label="Finalizações">${team.shots}</td>
+            <td data-label="Gols Sofridos">${team.goalsAgainst || 0}</td>
+        </tr>`;
+    }
+
+    const rows = sortedTeams.map(rowMapper).join('');
+
+    const getBtnColor = (tab) => {
+        if (tab === 'goals') return '#3a86ff'; // blue
+        if (tab === 'cards') return '#ffb703'; // yellow-orange
+        if (tab === 'penalties') return '#ff006e'; // vibrant pink/red
+        return '#8338ec'; // purple
+    };
+    const btnStyle = (tab) => {
+        const color = getBtnColor(tab);
+        if (activeTab === tab) {
+            return `background: ${color}; color: white; border-color: ${color}; box-shadow: 0 4px 15px ${color}80; text-shadow: 0 1px 3px rgba(0,0,0,0.5); font-weight: bold;`;
+        }
+        return `background: ${color}33; color: ${color}; border-color: ${color}80;`;
+    };
 
     return `
         <section class="card section-panel stats-panel">
             <div class="title-group">
                 <div>
-                    <h3>${expanded ? 'Estatísticas do campeonato' : 'Gols do campeonato'}</h3>
-                    <p class="description">Atualiza em tempo real durante a fase de grupos e mata-mata.</p>
+                    <h3>Ranking e Estatísticas</h3>
+                    <p class="description">Alterne entre as abas para ver os líderes de cada categoria.</p>
                 </div>
             </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <button class="btn-stats btn-tab" data-tab="goals" style="${btnStyle('goals')}">Gols</button>
+                <button class="btn-stats btn-tab" data-tab="cards" style="${btnStyle('cards')}">Cartões & Faltas</button>
+                <button class="btn-stats btn-tab" data-tab="penalties" style="${btnStyle('penalties')}">Pênaltis</button>
+                <button class="btn-stats btn-tab" data-tab="shots" style="${btnStyle('shots')}">Finalizações & Defesa</button>
+            </div>
+
             <div class="table-wrapper">
                 <table class="stats-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Gols</th>
-                            <th>Tomados</th>
-                            ${expanded ? '<th>Saldo</th><th>Pts</th>' : ''}
-                        </tr>
-                    </thead>
+                    <thead>${thead}</thead>
                     <tbody>${rows}</tbody>
                 </table>
             </div>
@@ -281,7 +340,7 @@ function renderTournamentStats(mode, expanded = false) {
     `;
 }
 
-function renderPlayerStatsTable(mode) {
+function getPlayerStatsRowsHtml(mode) {
     if (state.multiplayer.numPlayers < 1) return '';
     const numPlayers = state.multiplayer.numPlayers;
     
@@ -314,9 +373,9 @@ function renderPlayerStatsTable(mode) {
         if (isLeague) {
             aliveCount = assignedIds.length;
         } else {
-            if (tournament.knockout) {
+            if (tournament.knockout && tournament.knockout.matches) {
                 if (tournament.knockout.stage === stages.champion) {
-                    aliveCount = assignedIds.includes(tournament.champion.id) ? 1 : 0;
+                    aliveCount = assignedIds.includes(tournament.champion?.id) ? 1 : 0;
                 } else {
                     tournament.knockout.matches.forEach(m => {
                         if (assignedIds.includes(m.teamA.id)) aliveCount++;
@@ -340,7 +399,7 @@ function renderPlayerStatsTable(mode) {
     
     rows.sort((a, b) => b.aliveCount - a.aliveCount || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst));
     
-    const htmlRows = rows.map(r => `
+    return rows.map(r => `
         <tr>
             <td data-label="Player"><span class="player-badge" style="background: ${r.playerColor}">P${r.p}</span></td>
             <td data-label="Times Vivos">${r.aliveCount}</td>
@@ -348,6 +407,11 @@ function renderPlayerStatsTable(mode) {
             <td data-label="Gols Sofridos">${r.goalsAgainst}</td>
         </tr>
     `).join('');
+}
+
+function renderPlayerStatsTable(mode) {
+    const htmlRows = getPlayerStatsRowsHtml(mode);
+    if (!htmlRows) return '';
     
     return `
         <section class="card section-panel stats-panel">
@@ -368,7 +432,7 @@ function renderPlayerStatsTable(mode) {
                             <th>Gols Sofridos</th>
                         </tr>
                     </thead>
-                    <tbody>${htmlRows}</tbody>
+                    <tbody id="player-stats-tbody">${htmlRows}</tbody>
                 </table>
             </div>
         </section>
@@ -574,6 +638,7 @@ function renderLeagueAssignment(key) {
             ${state.multiplayer.numPlayers > 1 ? `<div class="player-selector-bar">${playerButtons}</div>` : ''}
         </section>
         <div class="section-panel team-selection">${items}</div>
+        ${renderMultiplayerSidebar(key)}
     `;
     
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
@@ -588,6 +653,19 @@ function renderLeagueAssignment(key) {
         });
     });
     
+    app.querySelectorAll('.multiplayer-sidebar .sidebar-player-row').forEach(row => {
+        row.addEventListener('click', () => {
+            state.multiplayer.activePlayer = Number(row.getAttribute('data-select-player'));
+            if (document.querySelector('.league-group-card')) {
+                if (typeof mode !== 'undefined') renderTournamentSelection(mode);
+                else if (typeof key !== 'undefined') renderTournamentSelection(key);
+            } else {
+                if (typeof key !== 'undefined') renderLeagueAssignment(key);
+                else if (typeof mode !== 'undefined') renderLeagueAssignment(mode);
+            }
+        });
+    });
+
     app.querySelectorAll('.team-card').forEach(card => {
         card.addEventListener('click', () => {
             const id = card.getAttribute('data-id');
@@ -753,6 +831,7 @@ function renderTournamentSelection(mode) {
             <input type="text" id="teamSearchInput" class="team-search-input" placeholder="🔍 Digite para buscar um time..." value="${tournament.searchQuery || ''}" />
         </div>
         <div class="section-panel">${sections}</div>
+        ${renderMultiplayerSidebar(mode)}
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
@@ -909,6 +988,24 @@ function renderSimpleSpecial(title, description) {
     document.getElementById('simulateRound').addEventListener('click', simulateLeagueRound);
     document.getElementById('simulateAll').addEventListener('click', simulateLeagueAll);
     document.getElementById('toggleScoresBtn').addEventListener('click', toggleScoresPanel);
+
+    app.querySelectorAll('.btn-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.activeStatsTab = btn.getAttribute('data-tab');
+            const container = document.getElementById('leagueStatsTabsContainer');
+            if (container) container.innerHTML = renderTournamentStats(key, true);
+            
+            // Re-bind listeners for tabs in this scope
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                b.addEventListener('click', () => {
+                    state.activeStatsTab = b.getAttribute('data-tab');
+                    if (container) container.innerHTML = renderTournamentStats(key, true);
+                    // A proper component framework would be nice here, but for now we reload the full screen or re-bind
+                    renderLeagueSimulator(key);
+                });
+            });
+        });
+    });
     
     renderLeagueStatus();
     updateScoresPanel();
@@ -995,17 +1092,32 @@ function simulateMatch(match) {
     if (match.goalsA !== null) {
         return;
     }
-    const [goalsA, goalsB] = getLeagueGoals(match.teamA, match.teamB); 
+    const [goalsA, goalsB, statsA, statsB] = getLeagueGoals(match.teamA, match.teamB); 
     match.goalsA = goalsA;
     match.goalsB = goalsB;
-    updateTeamStats(match.teamA, goalsA, goalsB);
-    updateTeamStats(match.teamB, goalsB, goalsA);
+    updateTeamStats(match.teamA, goalsA, goalsB, statsA);
+    updateTeamStats(match.teamB, goalsB, goalsA, statsB);
 }
 
-function updateTeamStats(team, forGoals, againstGoals) {
+function updateTeamStats(team, forGoals, againstGoals, stats = null) {
+    if (team.yellows === undefined) team.yellows = 0;
+    if (team.reds === undefined) team.reds = 0;
+    if (team.fouls === undefined) team.fouls = 0;
+    if (team.shots === undefined) team.shots = 0;
+    if (team.penaltiesScored === undefined) team.penaltiesScored = 0;
+    if (team.penaltiesMissed === undefined) team.penaltiesMissed = 0;
+
     team.played += 1;
     team.goalsFor += forGoals;
     team.goalsAgainst += againstGoals;
+
+    if (stats) {
+        team.yellows += (stats.yellows || 0);
+        team.reds += (stats.reds || 0);
+        team.fouls += (stats.fouls || 0);
+        team.shots += (stats.shots || 0);
+    }
+
     if (forGoals > againstGoals) {
         team.wins += 1;
         team.points += 3;
@@ -1202,7 +1314,17 @@ function renderLeagueSimulator(key) {
         return;
     }
     state.leagueKey = key;
-    state.leagueTeams = createChampionshipTeams(league.teams);
+
+    if (!state.leagueTeams || state.leagueKey !== key) {
+        state.leagueTeams = createChampionshipTeams(league.teams);
+        state.leagueTeams.forEach((t, i) => t.id = `league-${key}-${i}`);
+    } else {
+        state.leagueTeams.forEach(t => {
+            t.played = 0; t.wins = 0; t.draws = 0; t.losses = 0;
+            t.goalsFor = 0; t.goalsAgainst = 0; t.points = 0;
+        });
+    }
+
     state.schedule = buildSchedule(state.leagueTeams);
     state.currentRound = 0;
     state.isScoresPanelOpen = false;
@@ -1225,7 +1347,12 @@ function renderLeagueSimulator(key) {
                 <button id="simulateAll" class="success">Simular campeonato</button>
             </div>
             
+            ${renderPlayerStatsTable(key)}
+            
             <div id="leagueSummary"></div>
+        <div id="leagueStatsTabsContainer">
+            ${renderTournamentStats(key, true)}
+        </div>
             
             <div style="text-align: center; margin: 15px 0;">
                 <button id="toggleScoresBtn" class="secondary" style="display: none;">Placares</button>
@@ -1239,10 +1366,28 @@ function renderLeagueSimulator(key) {
     `;
 
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
-    document.getElementById('restartButton').addEventListener('click', () => renderLeagueSimulator(key));
+    document.getElementById('restartButton').addEventListener('click', () => setupLeagueAssignment(key));
     document.getElementById('simulateRound').addEventListener('click', simulateLeagueRound);
     document.getElementById('simulateAll').addEventListener('click', simulateLeagueAll);
     document.getElementById('toggleScoresBtn').addEventListener('click', toggleScoresPanel);
+
+    app.querySelectorAll('.btn-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.activeStatsTab = btn.getAttribute('data-tab');
+            const container = document.getElementById('leagueStatsTabsContainer');
+            if (container) container.innerHTML = renderTournamentStats(key, true);
+            
+            // Re-bind listeners for tabs in this scope
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                b.addEventListener('click', () => {
+                    state.activeStatsTab = b.getAttribute('data-tab');
+                    if (container) container.innerHTML = renderTournamentStats(key, true);
+                    // A proper component framework would be nice here, but for now we reload the full screen or re-bind
+                    renderLeagueSimulator(key);
+                });
+            });
+        });
+    });
     
     renderLeagueStatus();
     updateScoresPanel();
@@ -1668,7 +1813,7 @@ function advanceTournamentGroupRound(mode) {
     tournament.groups.forEach(group => {
         const matches = group.rounds[currentRound];
         matches.forEach(match => {
-            const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); 
+            const [goalsA, goalsB, statsA, statsB] = getTournamentGoals(match.teamA, match.teamB); 
             match.goalsA = goalsA;
             match.goalsB = goalsB;
             updateTeamStats(match.teamA, goalsA, goalsB);
@@ -1746,7 +1891,7 @@ function renderKnockoutStage(mode) {
         let penaltyButton = '';
         if (!match.winner && match.goalsA !== null && match.goalsB !== null && match.goalsA === match.goalsB) {
             if (!match.penalties) {
-                penaltyButton = `<button data-open-penalty="${idx}" class="secondary open-penalty">PÊNALTIS</button>`;
+                penaltyButton = `<button data-open-penalty="${idx}" class="btn-stats toggle-match-stats">PÊNALTIS</button>`;
             } else {
                 match._idx = idx;
                 match._mode = mode;
@@ -1918,6 +2063,10 @@ function processPenaltyKick(match) {
     const shooterTeam = penalties.turn === 'A' ? match.teamA : match.teamB;
     const success = Math.random() < Math.min(0.9, 0.45 + (shooterTeam.strength || 50) / 220);
     shooterAttempts.push(success);
+    
+    if (shooterTeam.penaltiesScored === undefined) shooterTeam.penaltiesScored = 0;
+    if (shooterTeam.penaltiesMissed === undefined) shooterTeam.penaltiesMissed = 0;
+    if (success) shooterTeam.penaltiesScored++; else shooterTeam.penaltiesMissed++;
 
     const scoreA = penalties.attemptsA.filter(Boolean).length;
     const scoreB = penalties.attemptsB.filter(Boolean).length;
@@ -2092,6 +2241,19 @@ function getLiveMatchStats(match, minute) {
     const passesA = Math.round((poss.possessionA * 7.2 + (seed.basePassesA - seed.possessionA * 7.2)) * progress);
     const passesB = Math.round((poss.possessionB * 7.2 + (seed.basePassesB - seed.possessionB * 7.2)) * progress);
 
+    let targetShotsA = Math.round(seed.targetShotsA * progress);
+    let targetShotsB = Math.round(seed.targetShotsB * progress);
+    let shotsA = Math.round(seed.totalShotsA * progress);
+    let shotsB = Math.round(seed.totalShotsB * progress);
+
+    const goalsA = match.goalsA || 0;
+    const goalsB = match.goalsB || 0;
+
+    targetShotsA = Math.max(goalsA, targetShotsA);
+    targetShotsB = Math.max(goalsB, targetShotsB);
+    shotsA = Math.max(targetShotsA, shotsA);
+    shotsB = Math.max(targetShotsB, shotsB);
+
     return {
         possessionA: poss.possessionA,
         possessionB: poss.possessionB,
@@ -2099,10 +2261,10 @@ function getLiveMatchStats(match, minute) {
         passesB: Math.max(0, passesB),
         precisionA: seed.precisionA,
         precisionB: seed.precisionB,
-        shotsA: Math.round(seed.totalShotsA * progress),
-        shotsB: Math.round(seed.totalShotsB * progress),
-        targetShotsA: Math.round(seed.targetShotsA * progress),
-        targetShotsB: Math.round(seed.targetShotsB * progress),
+        shotsA: shotsA,
+        shotsB: shotsB,
+        targetShotsA: targetShotsA,
+        targetShotsB: targetShotsB,
         foulsA: Math.round(seed.foulsA * progress),
         foulsB: Math.round(seed.foulsB * progress),
         yellowsA: Math.round(seed.yellowsA * progress),
@@ -2282,7 +2444,7 @@ function renderLiveKnockoutStage(mode) {
         
         if (!match.winner && match.goalsA !== null && match.goalsB !== null && match.goalsA === match.goalsB && match.seconds >= 5400) {
             if (!match.penalties) {
-                penaltyPart = `<button data-open-live-penalty="${match.id}" class="secondary open-live-penalty">PÊNALTIS</button>`;
+                penaltyPart = `<button data-open-live-penalty="${match.id}" class="btn-stats open-live-penalty">PÊNALTIS</button>`;
             } else {
                 match._idx = idx;
                 match._mode = mode;
@@ -2290,31 +2452,39 @@ function renderLiveKnockoutStage(mode) {
             }
         }
 
-        const statsBtn = `<button data-toggle-match-stats="${match.id}" class="btn-stats toggle-match-stats">${match.showStats ? 'OCULTAR' : 'ESTATÍSTICAS'}</button>`;
+        const statsBtn = `<button data-toggle-match-stats="${match.id}" class="btn-stats toggle-match-stats">${match.showStats ? 'OCULTAR ESTAT.' : 'ESTATÍSTICAS'}</button>`;
+        const historyBtn = `<button data-toggle-match-history="${match.id}" class="btn-stats toggle-match-history">${match.showHistory ? 'OCULTAR MIN.' : 'MINUTO A MINUTO'}</button>`;
 
         const statsPanelHtml = match.showStats ? renderLiveMatchStatsPanel(match, mode) : '';
+        const historyPanelHtml = match.showHistory ? renderLiveMatchHistoryPanel(match) : '';
 
         const formattedTimer = formatMatchTimer(match.seconds || 0);
 
         return `
             <div class="knockout-match-block" id="match-block-${match.id}">
-                <div class="match-item">
-                    <span>${renderTeamLabel(match.teamA, { mode })}</span>
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;">
-                        <span id="score-display-${match.id}" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 4px;">${score}</span>
-                        <div id="timer-${match.id}" class="match-timer ${(match.seconds || 0) >= 5400 ? 'finished' : ''}">${formattedTimer}</div>
+                <div class="match-content-wrapper">
+                    <div class="match-item-grid">
+                        <span class="match-team-a">${renderTeamLabel(match.teamA, { mode })}</span>
+                        <div class="match-score-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;">
+                            <span id="score-display-${match.id}" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 4px;">${score}</span>
+                            <div id="timer-${match.id}" class="match-timer ${(match.seconds || 0) >= 5400 ? 'finished' : ''}">${formattedTimer}</div>
+                        </div>
+                        <span class="match-team-b">${renderTeamLabel(match.teamB, { mode })}</span>
                     </div>
-                    <span>${renderTeamLabel(match.teamB, { mode })}</span>
                     ${result}
                     ${penaltyPart}
-                    ${statsBtn}
+                    <div class="match-actions-row">
+                        ${statsBtn}
+                        ${historyBtn}
+                    </div>
+                    ${statsPanelHtml}
+                    ${historyPanelHtml}
                 </div>
-                ${statsPanelHtml}
             </div>
         `;
     }).join('');
 
-    const historyRows = tournament.live.history.length ? tournament.live.history.map(event => `<div class="match-item"><span>${event.minute}'</span><span>${event.message}</span><span></span></div>`).join('') : '<div class="alert-box">Nenhum evento ainda.</div>';
+    const historyRows = '';
 
     let nextStageButton = '';
     if (allMatchesFinished) {
@@ -2345,13 +2515,7 @@ function renderLiveKnockoutStage(mode) {
         </section>
         ${renderPlayerStatsTable(mode)}
         <section class="knockout-list section-panel">${matchRows}</section>
-        <section class="card section-panel">
-            <div class="title-group" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="display: inline-block;">Histórico de gols</h3>
-                <button class="btn-toggle-panel toggle-history-stats">OCULTAR</button>
-            </div>
-            <div class="match-history history-wrapper">${historyRows}</div>
-        </section>
+
         ${renderTournamentStats(mode, true)}
     `;
 
@@ -2372,6 +2536,17 @@ function renderLiveKnockoutStage(mode) {
             const match = tournament.live.matches.find(m => String(m.id) === String(matchId));
             if (match) {
                 match.showStats = !match.showStats;
+                renderLiveKnockoutStage(mode);
+            }
+        });
+    });
+
+    app.querySelectorAll('.toggle-match-history').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const matchId = btn.getAttribute('data-toggle-match-history');
+            const match = tournament.live.matches.find(m => String(m.id) === String(matchId));
+            if (match) {
+                match.showHistory = !match.showHistory;
                 renderLiveKnockoutStage(mode);
             }
         });
@@ -2489,14 +2664,19 @@ function updateLiveDOM(mode) {
             if (barDraw) barDraw.style.width = `${prob.pctDraw}%`;
             if (barB) barB.style.width = `${prob.pctB}%`;
         }
+
+        const historyPanel = document.getElementById(`history-panel-${match.id}`);
+        if (historyPanel && match.showHistory) {
+            historyPanel.outerHTML = renderLiveMatchHistoryPanel(match);
+        }
     });
 
     // 3. Histórico de gols
-    const historyContainer = document.querySelector('.match-history');
-    if (historyContainer && tournament.live.history.length) {
-        historyContainer.innerHTML = tournament.live.history.map(event =>
-            `<div class="match-item"><span>${event.minute}'</span><span>${event.message}</span><span></span></div>`
-        ).join('');
+
+
+    const pStatsTbody = document.getElementById('player-stats-tbody');
+    if (pStatsTbody) {
+        pStatsTbody.innerHTML = getPlayerStatsRowsHtml(mode);
     }
 }
 
@@ -2516,6 +2696,8 @@ function startLiveMatch(mode) {
         match.seconds = 0;
         match.penalties = null;
         match.winner = null;
+        match.matchHistory = [];
+        match._lastStats = getLiveMatchStats(match, 0);
     });
 
     tournament.live.intervalId = setInterval(() => {
@@ -2538,18 +2720,50 @@ function startLiveMatch(mode) {
             chanceA = Math.max(0.001, Math.min(0.015, chanceA));
             chanceB = Math.max(0.001, Math.min(0.015, chanceB));
             
+            const currentStats = getLiveMatchStats(match, match.minute);
+            const prev = match._lastStats || currentStats;
+
             if (Math.random() < chanceA) {
                 match.goalsA += 1;
-                updateTeamStats(match.teamA, 1, 0);
-                updateTeamStats(match.teamB, 0, 1);
-                tournament.live.history.unshift({ minute: match.minute, message: `${match.teamA.name} marcou!` });
+                updateTeamStats(match.teamA, 1, 0, {shots:1});
+                updateTeamStats(match.teamB, 0, 1, {});
+                match.matchHistory.unshift({ minute: match.minute, type: 'goal', teamName: match.teamA.name });
             }
             if (Math.random() < chanceB) {
                 match.goalsB += 1;
-                updateTeamStats(match.teamB, 1, 0);
-                updateTeamStats(match.teamA, 0, 1);
-                tournament.live.history.unshift({ minute: match.minute, message: `${match.teamB.name} marcou!` });
+                updateTeamStats(match.teamB, 1, 0, {shots:1});
+                updateTeamStats(match.teamA, 0, 1, {});
+                match.matchHistory.unshift({ minute: match.minute, type: 'goal', teamName: match.teamB.name });
             }
+
+            // Sync yellows, reds, fouls, shots from deterministic stats generator
+            const updateCumulative = (team, stat, amount) => {
+                if (amount > 0) {
+                    team[stat] = (team[stat] || 0) + amount;
+                }
+            };
+            updateCumulative(match.teamA, 'yellows', currentStats.yellowsA - prev.yellowsA);
+            updateCumulative(match.teamB, 'yellows', currentStats.yellowsB - prev.yellowsB);
+            updateCumulative(match.teamA, 'reds', currentStats.redsA - prev.redsA);
+            updateCumulative(match.teamB, 'reds', currentStats.redsB - prev.redsB);
+            updateCumulative(match.teamA, 'fouls', currentStats.foulsA - prev.foulsA);
+            updateCumulative(match.teamB, 'fouls', currentStats.foulsB - prev.foulsB);
+            updateCumulative(match.teamA, 'shots', currentStats.shotsA - prev.shotsA);
+            updateCumulative(match.teamB, 'shots', currentStats.shotsB - prev.shotsB);
+            
+            for(let i = 0; i < (currentStats.yellowsA - prev.yellowsA); i++) {
+                match.matchHistory.unshift({ minute: match.minute, type: 'yellow', teamName: match.teamA.name });
+            }
+            for(let i = 0; i < (currentStats.yellowsB - prev.yellowsB); i++) {
+                match.matchHistory.unshift({ minute: match.minute, type: 'yellow', teamName: match.teamB.name });
+            }
+            for(let i = 0; i < (currentStats.redsA - prev.redsA); i++) {
+                match.matchHistory.unshift({ minute: match.minute, type: 'red', teamName: match.teamA.name });
+            }
+            for(let i = 0; i < (currentStats.redsB - prev.redsB); i++) {
+                match.matchHistory.unshift({ minute: match.minute, type: 'red', teamName: match.teamB.name });
+            }
+            match._lastStats = currentStats;
         });
 
         // Atualização SEM PISCAR O DOM:
@@ -2656,5 +2870,98 @@ document.addEventListener('click', (e) => {
             wrapper.style.display = isHidden ? '' : 'none';
             e.target.textContent = isHidden ? 'OCULTAR' : 'MOSTRAR';
         }
+    } else if (e.target.closest('.sidebar-player-row')) {
+        const row = e.target.closest('.sidebar-player-row');
+        state.multiplayer.activePlayer = Number(row.getAttribute('data-select-player'));
+        
+        document.querySelectorAll('.sidebar-player-row').forEach(r => r.classList.remove('active'));
+        row.classList.add('active');
+
+        if (document.querySelector('.league-group-card')) {
+            if (typeof mode !== 'undefined') renderTournamentSelection(mode);
+            else if (state.leagueKey) renderTournamentSelection(state.leagueKey);
+        } else {
+            if (state.leagueKey) renderLeagueAssignment(state.leagueKey);
+        }
+    } else if (e.target.matches('.btn-tab')) {
+        state.activeStatsTab = e.target.getAttribute('data-tab');
+        
+        // Re-render
+        if (document.getElementById('leagueStatsTabsContainer')) {
+            const container = document.getElementById('leagueStatsTabsContainer');
+            if (container) container.innerHTML = renderTournamentStats(state.leagueKey, true);
+        } else {
+            const panel = e.target.closest('.stats-panel');
+            if (panel && panel.parentElement) {
+                const isExpanded = panel.querySelector('th:nth-child(4)') !== null;
+                const mode = state.leagueKey || 'worldCup';
+                panel.outerHTML = renderTournamentStats(mode, isExpanded);
+            }
+        }
     }
 });
+
+function renderMultiplayerSidebar(mode) {
+    if (state.multiplayer.numPlayers < 2) return '';
+    
+    let isLeague = !['libertadores', 'custom', 'worldCup', 'championsleague'].includes(mode);
+    const tournament = isLeague ? null : state[mode];
+    const allTeams = isLeague ? state.leagueTeams : (tournament.pool || []);
+    
+    let rows = '';
+    for (let p = 1; p <= state.multiplayer.numPlayers; p++) {
+        const playerColor = state.multiplayer.colors[p];
+        const count = Object.values(state.multiplayer.playerAssignments).filter(pid => pid === p).length;
+        const isActive = p === state.multiplayer.activePlayer ? ' active' : '';
+        
+        rows += `
+            <div class="sidebar-player-row${isActive}" data-select-player="${p}">
+                <div class="player-info">
+                    <div class="player-color-dot" style="background: ${playerColor}"></div>
+                    <span>Player ${p}</span>
+                </div>
+                <div class="player-count">${count} times</div>
+            </div>
+        `;
+    }
+    
+    return `
+        <aside class="multiplayer-sidebar">
+            <h3>Seleção Atual</h3>
+            ${rows}
+        </aside>
+    `;
+}
+
+function renderLiveMatchHistoryPanel(match) {
+    if (!match.matchHistory || match.matchHistory.length === 0) {
+        return `
+            <div class="stats-panel history-panel" id="history-panel-${match.id}">
+                <div class="alert-box">Nenhum evento registrado ainda.</div>
+            </div>
+        `;
+    }
+
+    const rows = match.matchHistory.map(event => {
+        let icon = '';
+        if (event.type === 'goal') icon = '⚽';
+        if (event.type === 'yellow') icon = '🟨';
+        if (event.type === 'red') icon = '🟥';
+
+        return `
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <span style="font-weight: bold; width: 40px;">${event.minute}'</span>
+                <span style="flex: 1; text-align: center;">${icon} ${event.teamName}</span>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="stats-panel history-panel" id="history-panel-${match.id}">
+            <h4 style="text-align: center; margin-bottom: 10px; font-size: 0.9rem;">Histórico da Partida</h4>
+            <div style="max-height: 200px; overflow-y: auto;">
+                ${rows}
+            </div>
+        </div>
+    `;
+}
