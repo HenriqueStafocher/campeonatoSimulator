@@ -1589,3 +1589,245 @@ table.stats-table tr + tr td {
     flex-wrap: wrap;
     margin-top: 5px;
 }
+
+@media (min-width: 768px) {
+    .knockout-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.league-standings-container {
+    display: grid;
+    .wizard-options {
+        grid-template-columns: 1fr;
+    }
+    .match-timer {
+        font-size: 0.95rem;
+        padding: 2px 4px;
+        min-width: 50px;
+        margin: 0 4px;
+    }
+    .match-item-grid {
+        grid-template-columns: 1fr 1fr !important;
+        grid-template-rows: auto auto;
+        gap: 10px !important;
+    }
+    .match-team-a {
+        grid-column: 1 / 2;
+        grid-row: 1 / 2;
+    }
+    .match-team-b {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+    }
+    .match-score-center {
+        grid-column: 1 / 3;
+        grid-row: 2 / 3;
+        width: 100%;
+        margin-top: 5px;
+    }
+    .team-label {
+        width: 100%;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+}
+
+/* CSS para P1/P2 Badges */
+.player-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #fff;
+    margin-right: 8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Temporizador Individual (Match Timer) */
+.match-timer {
+    display: inline-block;
+    background: #111;
+    color: #00ff00;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    margin: 0 10px;
+    min-width: 65px;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.match-timer.finished {
+    color: #ff3333;
+    text-shadow: 0 0 5px rgba(255, 51, 51, 0.5);
+}
+
+/* Botão de Ocultar/Mostrar */
+.btn-toggle-panel {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 10px;
+}
+
+.btn-toggle-panel:hover {
+    background: var(--surface-light);
+    color: var(--text);
+}
+
+.multiplayer-sidebar {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 280px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 16px;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.multiplayer-sidebar h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.multiplayer-sidebar .sidebar-player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+}
+
+.multiplayer-sidebar .sidebar-player-row:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.multiplayer-sidebar .sidebar-player-row.active {
+    border: 2px solid var(--text);
+    background: rgba(255,255,255,0.1);
+}
+
+.multiplayer-sidebar .sidebar-player-row .player-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.multiplayer-sidebar .sidebar-player-row .player-count {
+    font-weight: bold;
+}
+
+@media (max-width: 1200px) {
+    .multiplayer-sidebar {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
+.match-content-wrapper {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.match-item-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+.match-item-grid > span {
+    display: block;
+    text-align: center;
+}
+.match-team-a { text-align: right !important; }
+.match-team-b { text-align: left !important; }
+
+.match-actions-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+
+@media (min-width: 768px) {
+    .knockout-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.league-standings-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+@media (min-width: 981px) {
+    .league-standings-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.player-ranking-sidebar {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 250px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 1200px) {
+    .player-ranking-sidebar {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        width: 100%;
+        max-width: 320px;
+        margin: 20px auto;
+    }
+}

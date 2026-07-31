@@ -201,6 +201,11 @@ function renderTeamLabel(team, options = {}) {
 }
 
 function getTournamentTeamsForStats(mode) {
+    const isLeague = !['libertadores', 'custom', 'worldCup', 'championsleague'].includes(mode);
+    if (isLeague) {
+        return state.leagueTeams || [];
+    }
+    
     const tournament = state[mode];
     const tracked = new Map();
 
@@ -1074,18 +1079,67 @@ function simulateLeagueRound() {
     state.schedule[state.currentRound].forEach(match => simulateMatch(match));
     state.currentRound += 1;
     
+    checkLeagueFinished();
+    
     renderLeagueStatus();
     updateScoresPanel();
     renderLeagueStandings();
+    
+    // Update player stats and tournament stats
+    const statsTbody = document.getElementById('player-stats-tbody');
+    if (statsTbody) statsTbody.innerHTML = getPlayerStatsRowsHtml(state.leagueKey);
+    
+    const statsTabsContainer = document.getElementById('leagueStatsTabsContainer');
+    if (statsTabsContainer) statsTabsContainer.innerHTML = renderTournamentStats(state.leagueKey, true);
 }
 
 function simulateLeagueAll() {
     for (; state.currentRound < state.schedule.length; state.currentRound += 1) {
         state.schedule[state.currentRound].forEach(match => simulateMatch(match));
     }
+    
+    checkLeagueFinished();
+    
     renderLeagueStatus();
     updateScoresPanel();
     renderLeagueStandings();
+    
+    // Update player stats and tournament stats
+    const statsTbody = document.getElementById('player-stats-tbody');
+    if (statsTbody) statsTbody.innerHTML = getPlayerStatsRowsHtml(state.leagueKey);
+    
+    const statsTabsContainer = document.getElementById('leagueStatsTabsContainer');
+    if (statsTabsContainer) statsTabsContainer.innerHTML = renderTournamentStats(state.leagueKey, true);
+}
+
+function checkLeagueFinished() {
+    if (state.currentRound === state.schedule.length && !state.leaguePointsAwarded) {
+        state.leaguePointsAwarded = true;
+        
+        const sorted = [...state.leagueTeams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            const diffA = a.goalsFor - a.goalsAgainst;
+            const diffB = b.goalsFor - b.goalsAgainst;
+            if (diffB !== diffA) return diffB - diffA;
+            return b.goalsFor - a.goalsFor;
+        });
+        
+        state.lastAwardedPoints = {};
+        
+        for (let i = 0; i < sorted.length; i++) {
+            const team = sorted[i];
+            const pid = state.multiplayer.playerAssignments[team.id];
+            if (pid) {
+                const points = Math.max(0, 20 - i);
+                if (!state.multiplayer.leaguePoints) state.multiplayer.leaguePoints = {};
+                if (!state.multiplayer.leaguePoints[pid]) state.multiplayer.leaguePoints[pid] = 0;
+                
+                state.multiplayer.leaguePoints[pid] += points;
+                state.lastAwardedPoints[pid] = (state.lastAwardedPoints[pid] || 0) + points;
+            }
+        }
+        localStorage.setItem('multiplayerLeaguePoints', JSON.stringify(state.multiplayer.leaguePoints));
+    }
 }
 
 function simulateMatch(match) {
@@ -1116,6 +1170,8 @@ function updateTeamStats(team, forGoals, againstGoals, stats = null) {
         team.reds += (stats.reds || 0);
         team.fouls += (stats.fouls || 0);
         team.shots += (stats.shots || 0);
+        team.penaltiesScored += (stats.penaltiesScored || 0);
+        team.penaltiesMissed += (stats.penaltiesMissed || 0);
     }
 
     if (forGoals > againstGoals) {
@@ -1157,7 +1213,28 @@ function getLeagueGoals(teamA, teamB) {
         goalsA = Math.floor(Math.random() * goalsB);
     }
     
-    return [goalsA, goalsB];
+    const generateLeagueStats = (team) => {
+        const curPens = (team.penaltiesScored || 0) + (team.penaltiesMissed || 0);
+        let penaltiesScored = 0;
+        let penaltiesMissed = 0;
+        if (curPens < 10 && Math.random() < 0.15) {
+            if (Math.random() < 0.75) penaltiesScored = 1;
+            else penaltiesMissed = 1;
+        }
+        
+        let yellows = Math.floor(Math.random() * 3);
+        if (Math.random() < 0.2) yellows += 1;
+        
+        let reds = 0;
+        if (Math.random() < 0.12) reds = 1;
+        
+        let fouls = Math.floor(Math.random() * 4) + 1;
+        let shots = Math.floor(Math.random() * 10) + 5; 
+        
+        return { penaltiesScored, penaltiesMissed, yellows, reds, fouls, shots };
+    };
+    
+    return [goalsA, goalsB, generateLeagueStats(teamA), generateLeagueStats(teamB)];
 }
 
 function getTournamentGoals(teamA, teamB) {
@@ -1285,24 +1362,79 @@ function renderLeagueStandings() {
     `).join('');
 
     target.innerHTML = `
-        <div class="table-wrapper">
-            <table class="standings">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Time</th>
-                        <th>PTS</th>
-                        <th>J</th>
-                        <th>V</th>
-                        <th>E</th>
-                        <th>D</th>
-                        <th>GP</th>
-                        <th>GC</th>
-                        <th>SG</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
+        <div class="league-standings-container">
+            <div class="table-wrapper">
+                <table class="standings">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Time</th>
+                            <th>PTS</th>
+                            <th>J</th>
+                            <th>V</th>
+                            <th>E</th>
+                            <th>D</th>
+                            <th>GP</th>
+                            <th>GC</th>
+                            <th>SG</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            ${getPlayerRankingTableHtml(sorted)}
+        </div>
+    `;
+
+    const resetBtn = document.getElementById('resetPlayerPointsBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (confirm("Tem certeza que deseja resetar os pontos globais de todos os players?")) {
+                state.multiplayer.leaguePoints = {};
+                for (let i = 1; i <= 6; i++) state.multiplayer.leaguePoints[i] = 0;
+                localStorage.setItem('multiplayerLeaguePoints', JSON.stringify(state.multiplayer.leaguePoints));
+                renderLeagueStandings();
+            }
+        });
+    }
+}
+
+function getPlayerRankingTableHtml(sortedTeams) {
+    if (state.multiplayer.numPlayers < 1) return '';
+    
+    const rankingRows = [];
+    for (let p = 1; p <= state.multiplayer.numPlayers; p++) {
+        const color = state.multiplayer.colors[p];
+        const total = state.multiplayer.leaguePoints ? (state.multiplayer.leaguePoints[p] || 0) : 0;
+        
+        let earnedHtml = '';
+        if (state.leaguePointsAwarded && state.lastAwardedPoints && state.lastAwardedPoints[p]) {
+            earnedHtml = ` <span style="color: #06d6a0; font-weight: bold; font-size: 0.9em;">(+${state.lastAwardedPoints[p]})</span>`;
+        }
+        
+        rankingRows.push({ p, color, total, earnedHtml });
+    }
+    
+    rankingRows.sort((a, b) => b.total - a.total);
+    
+    return `
+        <div class="player-ranking-sidebar">
+            <h3 style="text-align: center; margin-top: 0; margin-bottom: 15px;">Ranking Players</h3>
+            <div style="display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: center; margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; font-size: 0.9em; color: var(--muted);">
+                <span style="text-align: center;">#</span>
+                <span>Player</span>
+                <span style="text-align: right;">PTS</span>
+            </div>
+            ${rankingRows.map((r, idx) => `
+                <div style="display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span style="text-align: center; font-weight: bold;">${idx + 1}</span>
+                    <span><span class="player-badge" style="background: ${r.color}; width: 24px; height: 24px; font-size: 0.8em; margin: 0; box-shadow: none;">P${r.p}</span></span>
+                    <span style="text-align: right;"><strong>${r.total}</strong>${r.earnedHtml}</span>
+                </div>
+            `).join('')}
+            <div style="text-align: center; margin-top: 15px;">
+                <button id="resetPlayerPointsBtn" class="danger" style="padding: 6px 16px; font-size: 0.85em; border-radius: 6px;">Limpar</button>
+            </div>
         </div>
     `;
 }
@@ -1327,6 +1459,8 @@ function renderLeagueSimulator(key) {
 
     state.schedule = buildSchedule(state.leagueTeams);
     state.currentRound = 0;
+    state.leaguePointsAwarded = false;
+    state.lastAwardedPoints = {};
     state.isScoresPanelOpen = false;
 
     app.innerHTML = `
@@ -1350,10 +1484,6 @@ function renderLeagueSimulator(key) {
             ${renderPlayerStatsTable(key)}
             
             <div id="leagueSummary"></div>
-        <div id="leagueStatsTabsContainer">
-            ${renderTournamentStats(key, true)}
-        </div>
-            
             <div style="text-align: center; margin: 15px 0;">
                 <button id="toggleScoresBtn" class="secondary" style="display: none;">Placares</button>
             </div>
@@ -1362,6 +1492,10 @@ function renderLeagueSimulator(key) {
             </div>
 
             <div id="leagueTable"></div>
+            
+            <div id="leagueStatsTabsContainer" style="margin-top: 20px;">
+                ${renderTournamentStats(key, true)}
+            </div>
         </section>
     `;
 
