@@ -74,6 +74,7 @@ const leagueButtons = [
 const stages = {
     selection: 'selection',
     group: 'group',
+    sessentaequatroavos: 'sessentaequatroavos',
     trintaedoisavos: 'trintaedoisavos',
     dezesseisavos: 'dezesseisavos',
     oitavas: 'oitavas',
@@ -415,6 +416,7 @@ function getPlayerStatsRowsHtml(mode) {
 }
 
 function renderPlayerStatsTable(mode) {
+    const isCurrentModeLeague = mode !== 'custom' && !['copadomundo', 'champions', 'libertadores', 'worldCup', 'championsleague'].includes(mode);
     const htmlRows = getPlayerStatsRowsHtml(mode);
     if (!htmlRows) return '';
     
@@ -539,6 +541,7 @@ function renderCustomTeamCountSelection() {
                 <button class="wizard-btn" data-teams="48">48 times (12 grupos)</button>
                 <button class="wizard-btn" data-teams="64">64 times (16 grupos)</button>
                 <button class="wizard-btn" data-teams="128">128 times (32 grupos)</button>
+                <button class="wizard-btn" data-teams="256">256 times (32 grupos de 8 times)</button>
             </div>
         </section>
     `;
@@ -720,10 +723,10 @@ function buildCustomPool() {
         if (!league.teams || ['custom', 'worldCup', 'championsleague', 'libertadores'].includes(leagueKey)) {
             return;
         }
-        league.teams.forEach(team => {
+        league.teams.forEach((team, idx) => {
             pool.push({
                 ...team,
-                id: `${leagueKey}-${team.name}`,
+                id: `${leagueKey}-${team.name}-${idx}`,
                 leagueKey,
                 leagueLabel: league.label
             });
@@ -733,9 +736,9 @@ function buildCustomPool() {
 }
 
 function buildWorldCupPool() {
-    return leagueData.worldCup.teams.map(team => ({
+    return leagueData.worldCup.teams.map((team, idx) => ({
         ...team,
-        id: `worldCup-${team.name}`,
+        id: `worldCup-${team.name}-${idx}`,
         leagueKey: 'worldCup',
         leagueLabel: leagueData.worldCup.label
     }));
@@ -747,10 +750,10 @@ function buildChampionsLeaguePool() {
     leagueKeys.forEach(leagueKey => {
         const league = leagueData[leagueKey];
         if (!league || !league.teams) return;
-        league.teams.forEach(team => {
+        league.teams.forEach((team, idx) => {
             pool.push({
                 ...team,
-                id: `${leagueKey}-${team.name}`,
+                id: `${leagueKey}-${team.name}-${idx}`,
                 leagueKey,
                 leagueLabel: league.label
             });
@@ -849,13 +852,16 @@ function renderTournamentSelection(mode) {
         fillTournamentWithRandomTeams(mode);
         renderTournamentSelection(mode);
     });
-    document.getElementById('startGroups').addEventListener('click', () => {
+    
+    const startHandler = () => {
         if (tournament.selectedIds.size !== targetSize) {
             return;
         }
         tournament.selectedTeams = tournament.pool.filter(team => tournament.selectedIds.has(team.id));
         startTournamentGroupStage(mode);
-    });
+    };
+    
+    document.getElementById('startGroups').addEventListener('click', startHandler);
 
     const searchInput = document.getElementById('teamSearchInput');
     if (searchInput) {
@@ -1747,8 +1753,8 @@ function startTournamentGroupStage(mode) {
     }
 
     const shuffled = shuffle(selected);
-    const groupCount = targetSize / 4;
-    const teamsPerGroup = 4;
+    const teamsPerGroup = targetSize === 256 ? 8 : 4;
+    const groupCount = targetSize / teamsPerGroup;
     const groups = [];
     for (let index = 0; index < groupCount; index += 1) {
         groups.push({
@@ -1767,14 +1773,27 @@ function startTournamentGroupStage(mode) {
         });
     }
 
-    const roundPairs = [
-        [[0, 1], [2, 3]],
-        [[0, 2], [1, 3]],
-        [[0, 3], [1, 2]],
-        [[1, 0], [3, 2]],
-        [[2, 0], [3, 1]],
-        [[3, 0], [2, 1]]
-    ];
+    const generateRoundRobin = (nTeams) => {
+        const rounds = [];
+        let teams = Array.from({length: nTeams}, (_, i) => i);
+        if (nTeams % 2 !== 0) teams.push(-1);
+        const n = teams.length;
+        for (let i = 0; i < n - 1; i++) {
+            const round = [];
+            for (let j = 0; j < n / 2; j++) {
+                const t1 = teams[j];
+                const t2 = teams[n - 1 - j];
+                if (t1 !== -1 && t2 !== -1) {
+                    round.push([t1, t2]);
+                }
+            }
+            rounds.push(round);
+            teams.splice(1, 0, teams.pop());
+        }
+        return rounds;
+    };
+
+    const roundPairs = generateRoundRobin(teamsPerGroup);
 
     tournament.groups = groups.map(group => ({
         name: group.name,
@@ -1919,8 +1938,50 @@ function getQualifiedTeamsForKnockout(mode) {
             .slice(0, 8);
         return [...firstTwo, ...thirdPlaces];
     }
-
-    return tournament.groups.flatMap(group => getGroupStandings(group).slice(0, 2));
+    
+    const qPerGroup = tournament.targetSize === 256 ? 4 : 2;
+    
+    const getSeeding = (n) => {
+        if (n < 2) return [0];
+        let s = [0, 1];
+        while (s.length < n) {
+            let l = s.length, next = [];
+            for (let i = 0; i < l; i++) {
+                next.push(s[i], l * 2 - 1 - s[i]);
+            }
+            s = next;
+        }
+        return s;
+    };
+    
+    const seeds = getSeeding(groupCount);
+    const leftBracket = [];
+    const rightBracket = [];
+    
+    for (let pos = 0; pos < qPerGroup / 2; pos++) {
+        const topPos = pos;
+        const botPos = qPerGroup - 1 - pos;
+        
+        for (let i = 0; i < groupCount; i++) {
+            const seed = seeds[i];
+            const oppSeed = groupCount - 1 - seed;
+            
+            const g1 = tournament.groups[seed];
+            const g2 = tournament.groups[oppSeed];
+            
+            const isLeft = (i % 2 === 0) ^ (pos % 2 !== 0);
+            
+            if (isLeft) {
+                leftBracket.push(getGroupStandings(g1)[topPos]);
+                leftBracket.push(getGroupStandings(g2)[botPos]);
+            } else {
+                rightBracket.push(getGroupStandings(g1)[topPos]);
+                rightBracket.push(getGroupStandings(g2)[botPos]);
+            }
+        }
+    }
+    
+    return [...leftBracket, ...rightBracket];
 }
 
 function getGroupStandings(group) {
@@ -1969,7 +2030,8 @@ function startTournamentKnockout(mode) {
     const tournament = state[mode];
     const qualified = getQualifiedTeamsForKnockout(mode);
     let stage;
-    if (qualified.length === 64) stage = stages.trintaedoisavos;
+    if (qualified.length === 128) stage = stages.sessentaequatroavos;
+    else if (qualified.length === 64) stage = stages.trintaedoisavos;
     else if (qualified.length === 32) stage = stages.dezesseisavos;
     else if (qualified.length === 16) stage = stages.oitavas;
     else if (qualified.length === 8) stage = stages.quartas;
@@ -3099,3 +3161,5 @@ function renderLiveMatchHistoryPanel(match) {
         </div>
     `;
 }
+
+window.state = state;
