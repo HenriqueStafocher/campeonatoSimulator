@@ -3039,6 +3039,34 @@ function renderChampionScreen(mode) {
     });
 }
 
+function renderHowToPlay() {
+    app.innerHTML = `
+        <section class="card how-to-play-card">
+            <h2>Como Jogar?</h2>
+            
+            <div class="tutorial-topic">
+                <h3>🏆 Campeonato</h3>
+                <p><strong>Personalizado:</strong> Você monta seu campeonato como quiser, escolhe quantos players vão participar, depois quantos times vão ter (opções de 16 até 256 times) e escolhe quantos jogos terão na fase de grupos: 3 (somente ida) ou 6 (ida e volta). Por fim, você consegue escolher quais times cada player irá escolher (sempre selecione o player e os times que ele escolher), e cada time irá ficar com a cor do jogador associado.</p>
+                <p>Após selecionar os times, o campeonato se inicia na fase de grupos. Você simula rodada por rodada enquanto acompanha a classificação dos times em cada grupo. Após acabarem as rodadas da fase de grupos, iniciam-se os mata-matas (16 avos, oitavas, quartas, semifinal e final).</p>
+                <p>Você também poderá acompanhar quantos times cada player tem na disputa ainda e quantos gols cada player pontuou. Lá embaixo, no fim da página, também fica o ranking geral e as estatísticas de cada time individualmente!</p>
+                <p><strong>Copa do Mundo / Libertadores / Champions:</strong> Já estão com os formatos reais definidos. Selecione os times e tente levantar a taça!</p>
+            </div>
+            
+            <div class="tutorial-topic">
+                <h3>⚽ Liga</h3>
+                <p>Após escolher a liga que deseja simular, você poderá escolher quantos players vão participar e, em seguida, escolher quais times cada player deseja controlar.</p>
+                <p>Após isso, dependendo da colocação do time escolhido por cada player, no final de toda a liga será computada uma pontuação individual para cada player na tabela do lado direito, onde o 1° colocado recebe 20 pontos e, conforme a colocação na liga diminui, os pontos também diminuem para o player.</p>
+                <p>Também tem ranking de estatísticas no final da página para você acompanhar o desempenho de todos os times!</p>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button id="backButton" class="secondary">Voltar ao Menu</button>
+            </div>
+        </section>
+    `;
+    document.getElementById('backButton').addEventListener('click', renderMainScreen);
+}
+
 function initApp() {
     StorageManager.saveLeagues();
     renderMainScreen();
@@ -3052,7 +3080,9 @@ if (document.readyState === 'loading') {
 
 // Global Toggle Handlers
 document.addEventListener('click', (e) => {
-    if (e.target.matches('.toggle-history-stats')) {
+    if (e.target.closest('#btn-how-to-play')) {
+        renderHowToPlay();
+    } else if (e.target.matches('.toggle-history-stats')) {
         const wrapper = e.target.closest('.section-panel').querySelector('.history-wrapper');
         if (wrapper) {
             const isHidden = wrapper.style.display === 'none';
