@@ -171,6 +171,36 @@ function shuffle(array) {
     return copy;
 }
 
+function distributeTeamsEvenly(teams, numGroups) {
+    if (!state.multiplayer || state.multiplayer.numPlayers < 1) return shuffle(teams);
+    const byPlayer = {};
+    const unassigned = [];
+    teams.forEach(team => {
+        const playerId = state.multiplayer.playerAssignments[team.id];
+        if (playerId) {
+            if (!byPlayer[playerId]) byPlayer[playerId] = [];
+            byPlayer[playerId].push(team);
+        } else {
+            unassigned.push(team);
+        }
+    });
+    for (let p in byPlayer) byPlayer[p] = shuffle(byPlayer[p]);
+    const shuffledUnassigned = shuffle(unassigned);
+    const groups = Array.from({length: numGroups}, () => []);
+    let groupIdx = 0;
+    for (let p in byPlayer) {
+        byPlayer[p].forEach(team => {
+            groups[groupIdx].push(team);
+            groupIdx = (groupIdx + 1) % numGroups;
+        });
+    }
+    shuffledUnassigned.forEach(team => {
+        groups[groupIdx].push(team);
+        groupIdx = (groupIdx + 1) % numGroups;
+    });
+    return groups.flat();
+}
+
 function getEffectiveStrength(team) {
     const baseStrength = Number(team?.strength);
     if (Number.isFinite(baseStrength) && baseStrength > 0) {
@@ -1160,6 +1190,13 @@ function simulateMatch(match) {
 }
 
 function updateTeamStats(team, forGoals, againstGoals, stats = null) {
+    if (team.played === undefined) team.played = 0;
+    if (team.goalsFor === undefined) team.goalsFor = 0;
+    if (team.goalsAgainst === undefined) team.goalsAgainst = 0;
+    if (team.wins === undefined) team.wins = 0;
+    if (team.draws === undefined) team.draws = 0;
+    if (team.losses === undefined) team.losses = 0;
+    if (team.points === undefined) team.points = 0;
     if (team.yellows === undefined) team.yellows = 0;
     if (team.reds === undefined) team.reds = 0;
     if (team.fouls === undefined) team.fouls = 0;
@@ -1677,7 +1714,7 @@ function renderLibertadoresSelection() {
         if (state.libertadores.selectedTeams.length === 0) {
             return;
         }
-        startLibertadoresGroupStage();
+        startTournamentGroupStage('libertadores');
     });
 
     app.querySelectorAll('input[type=checkbox][data-id]').forEach(input => {
@@ -1746,15 +1783,16 @@ function startTournamentGroupStage(mode) {
         else if (targetSize === 16) stage = stages.oitavas;
         else stage = stages.oitavas;
         
-        const shuffled = shuffle(selected);
+        const matchCount = targetSize / 2;
+        const shuffled = distributeTeamsEvenly(selected, matchCount);
         tournament.knockout = createKnockoutStage(stage, shuffled);
         renderTournamentKnockout(mode);
         return;
     }
 
-    const shuffled = shuffle(selected);
     const teamsPerGroup = targetSize === 256 ? 8 : 4;
     const groupCount = targetSize / teamsPerGroup;
+    const shuffled = distributeTeamsEvenly(selected, groupCount);
     const groups = [];
     for (let index = 0; index < groupCount; index += 1) {
         groups.push({
@@ -1794,17 +1832,32 @@ function startTournamentGroupStage(mode) {
     };
 
     const roundPairs = generateRoundRobin(teamsPerGroup);
+    const maxRounds = getMaxGroupRounds(mode);
 
-    tournament.groups = groups.map(group => ({
-        name: group.name,
-        teams: group.teams,
-        rounds: roundPairs.map(pairs => pairs.map(([a, b]) => ({
+    tournament.groups = groups.map(group => {
+        let rounds = roundPairs.map(pairs => pairs.map(([a, b]) => ({
             teamA: group.teams[a],
             teamB: group.teams[b],
             goalsA: null,
             goalsB: null
-        })))
-    }));
+        })));
+        
+        if (maxRounds > rounds.length) {
+            const returnRounds = roundPairs.map(pairs => pairs.map(([a, b]) => ({
+                teamA: group.teams[b],
+                teamB: group.teams[a],
+                goalsA: null,
+                goalsB: null
+            })));
+            rounds = rounds.concat(returnRounds);
+        }
+
+        return {
+            name: group.name,
+            teams: group.teams,
+            rounds: rounds
+        };
+    });
     tournament.groupRound = 0;
     tournament.groupHistory = [];
     renderTournamentGroupStage(mode);
@@ -2213,7 +2266,9 @@ function simulateKnockoutStage(mode) {
 function advanceKnockoutStage(mode) {
     const knockout = state[mode].knockout;
     const winners = knockout.matches.map(match => match.winner).filter(Boolean);
-    if (knockout.stage === stages.trintaedoisavos) {
+    if (knockout.stage === stages.sessentaequatroavos) {
+        state[mode].knockout = createKnockoutStage(stages.trintaedoisavos, winners);
+    } else if (knockout.stage === stages.trintaedoisavos) {
         state[mode].knockout = createKnockoutStage(stages.dezesseisavos, winners);
     } else if (knockout.stage === stages.dezesseisavos) {
         state[mode].knockout = createKnockoutStage(stages.oitavas, winners);
@@ -2684,7 +2739,8 @@ function renderLiveKnockoutStage(mode) {
 
     let nextStageButton = '';
     if (allMatchesFinished) {
-        if (stage === stages.trintaedoisavos) nextStageButton = '<button id="goNext" class="success">Ir para 16avos</button>';
+        if (stage === stages.sessentaequatroavos) nextStageButton = '<button id="goNext" class="success">Ir para 32avos</button>';
+        else if (stage === stages.trintaedoisavos) nextStageButton = '<button id="goNext" class="success">Ir para 16avos</button>';
         else if (stage === stages.dezesseisavos) nextStageButton = '<button id="goNext" class="success">Ir para Oitavas</button>';
         else if (stage === stages.oitavas) nextStageButton = '<button id="goNext" class="success">Ir para Quartas</button>';
         else if (stage === stages.quartas) nextStageButton = '<button id="goNext" class="success">Ir para Semifinal</button>';
@@ -2873,6 +2929,17 @@ function updateLiveDOM(mode) {
     const pStatsTbody = document.getElementById('player-stats-tbody');
     if (pStatsTbody) {
         pStatsTbody.innerHTML = getPlayerStatsRowsHtml(mode);
+    }
+
+    const leagueStatsContainer = document.getElementById('leagueStatsTabsContainer');
+    if (leagueStatsContainer) {
+        leagueStatsContainer.innerHTML = renderTournamentStats(mode, true);
+    } else {
+        const mainStatsPanel = document.querySelector('section.stats-panel');
+        if (mainStatsPanel) {
+            const isExpanded = mainStatsPanel.querySelector('th') && (mainStatsPanel.querySelector('th').innerText.includes('Saldo') || mainStatsPanel.querySelector('th').innerText.includes('PTS'));
+            mainStatsPanel.outerHTML = renderTournamentStats(mode, isExpanded);
+        }
     }
 }
 

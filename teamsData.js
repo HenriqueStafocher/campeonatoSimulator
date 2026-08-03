@@ -395,7 +395,7 @@ const leagueData = {
             { image: 'img/holanda/psv.svg', name: 'PSV', strength: 82, nation: 'Holanda' },
             { image: 'img/holanda/feye.svg', name: 'Feyenoord', strength: 81, nation: 'Holanda' },
             { image: 'img/holanda/alkmaar.svg', name: 'AZ Alkmaar', strength: 78, nation: 'Holanda' },
-            { image: 'img/holanda/alkmaar.svg', name: 'Excelsior', strength: 78, nation: 'Holanda' },
+            { image: 'img/holanda/excelior.svg', name: 'Excelsior', strength: 78, nation: 'Holanda' },
             { image: 'img/holanda/twente.svg', name: 'Twente', strength: 76, nation: 'Holanda' },
             { image: 'img/holanda/utrechet.svg', name: 'Utrecht', strength: 75, nation: 'Holanda' },
             { image: 'img/holanda/heerenveen.svg', name: 'Heerenveen', strength: 73, nation: 'Holanda' },
