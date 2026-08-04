@@ -38,21 +38,63 @@ const leagueButtons = [
     { key: 'worldCup', label: 'Copa do Mundo', special: 'worldCup' },
     { key: 'championsleague', label: 'Champions League', special: 'championsleague' },
     { key: 'libertadores', label: 'Libertadores', special: 'libertadores' },
-    { key: 'brasil', label: 'Liga Brasil' },
+    { 
+        key: 'brasil_parent', 
+        label: 'Liga Brasil',
+        subLeagues: [
+            { key: 'brasil', label: 'Série A' },
+            { key: 'brasil_b', label: 'Série B' }
+        ]
+    },
     { key: 'grecia', label: 'Liga Grécia' },
     { key: 'tcheca', label: 'Liga Tcheca' },
-    { key: 'italia', label: 'Liga Italia' },
-    { key: 'inglaterra', label: 'Liga Inglaterra' },
+    { 
+        key: 'italia_parent', 
+        label: 'Liga Itália',
+        subLeagues: [
+            { key: 'italia', label: 'Serie A' },
+            { key: 'italia_b', label: 'Serie B' }
+        ]
+    },
+    { 
+        key: 'inglaterra_parent', 
+        label: 'Liga Inglaterra',
+        subLeagues: [
+            { key: 'inglaterra', label: 'Premier League' },
+            { key: 'inglaterra_b', label: 'Championship' }
+        ]
+    },
     { key: 'franca', label: 'Liga França' },
-    { key: 'alemanha', label: 'Liga Alemanha' },
-    { key: 'espanha', label: 'Liga Espanha' },
+    { 
+        key: 'alemanha_parent', 
+        label: 'Liga Alemanha',
+        subLeagues: [
+            { key: 'alemanha', label: 'Bundesliga' },
+            { key: 'alemanha_b', label: 'Bundesliga 2' }
+        ]
+    },
+    { 
+        key: 'espanha_parent', 
+        label: 'Liga Espanha',
+        subLeagues: [
+            { key: 'espanha', label: 'La Liga' },
+            { key: 'espanha_b', label: 'La Liga 2' }
+        ]
+    },
     { key: 'argentina', label: 'Liga Argentina' },
     { key: 'usa', label: 'Liga USA' },
     { key: 'japao', label: 'Liga Japão' },
     { key: 'belgica_a', label: 'Liga Bélgica' },
     { key: 'holanda', label: 'Liga Holanda' },
     { key: 'noruega', label: 'Liga Noruega' },
-    { key: 'portugal', label: 'Liga Portugal' },
+    { 
+        key: 'portugal_parent', 
+        label: 'Liga Portugal',
+        subLeagues: [
+            { key: 'portugal', label: 'Primeira Liga' },
+            { key: 'portugal_b', label: 'Liga Portugal 2' }
+        ]
+    },
     { key: 'suecia', label: 'Liga Suécia' },
     { key: 'mexico', label: 'Liga México' },
     { key: 'venezuela', label: 'Liga Venezuela' },
@@ -68,7 +110,13 @@ const leagueButtons = [
     { key: 'equador', label: 'Liga Equador' },
     { key: 'paraguai', label: 'Liga Paraguai' },
     { key: 'peru', label: 'Liga Peru' },
-    { key: 'uruguai', label: 'Liga Uruguai' }
+    { key: 'uruguai', label: 'Liga Uruguai' },
+    { key: 'austria', label: 'Liga Áustria' },
+    { key: 'dinamarca', label: 'Liga Dinamarca' },
+    { key: 'china', label: 'Liga China' },
+    { key: 'croacia', label: 'Liga Croácia' },
+    { key: 'ucrania', label: 'Liga Ucrânia' },
+    { key: 'servia', label: 'Liga Sérvia' }
 ];
 
 const stages = {
@@ -351,7 +399,7 @@ function renderTournamentStats(mode, expanded = false) {
     };
 
     return `
-        <section class="card section-panel stats-panel">
+        <section class="card section-panel stats-panel" id="tournament-stats-panel">
             <div class="title-group">
                 <div>
                     <h3>Ranking e Estatísticas</h3>
@@ -484,10 +532,7 @@ function renderMainScreen() {
     }).join('');
 
     app.innerHTML = `
-        <div class="top-external-links">
-            <button class="btn-discord" onclick="window.open('https://discord.gg/guw9HhE', '_blank')">Discord</button>
-            <button class="league-btn btn-feedback" onclick="window.open('https://forms.gle/uUqpSgCfStb6ZSrv6', '_blank')">Feedback</button>
-        </div>
+
         <section class="card">
             <div class="title-group">
                 <div>
@@ -508,8 +553,41 @@ function renderMainScreen() {
 }
 
 function handleLeagueChoice(key) {
-    state.leagueKey = key;
-    renderPlayerCountSelection(key);
+    const parentButton = leagueButtons.find(b => b.key === key);
+    if (parentButton && parentButton.subLeagues) {
+        renderSubLeagueSelection(parentButton);
+    } else {
+        state.leagueKey = key;
+        renderPlayerCountSelection(key);
+    }
+}
+
+function renderSubLeagueSelection(parentButton) {
+    const buttons = parentButton.subLeagues.map(sub => {
+        return `<button data-key="${sub.key}" class="league-btn">${sub.label}</button>`;
+    }).join('');
+    
+    app.innerHTML = `
+        <section class="card">
+            <div class="title-group">
+                <div>
+                    <h2>${parentButton.label}</h2>
+                    <p class="description">Escolha a divisão desejada.</p>
+                </div>
+                <div class="header-action-buttons">
+                    <button id="backButton" class="secondary">Voltar ao menu</button>
+                </div>
+            </div>
+            <div class="button-grid">${buttons}</div>
+        </section>
+    `;
+    
+    app.querySelectorAll('button[data-key]').forEach(button => {
+        button.addEventListener('click', () => {
+            handleLeagueChoice(button.dataset.key);
+        });
+    });
+    document.getElementById('backButton').addEventListener('click', renderMainScreen);
 }
 
 function renderPlayerCountSelection(key) {
@@ -2264,8 +2342,10 @@ function simulateKnockoutStage(mode) {
 }
 
 function advanceKnockoutStage(mode) {
-    const knockout = state[mode].knockout;
-    const winners = knockout.matches.map(match => match.winner).filter(Boolean);
+    const tournament = state[mode];
+    const knockout = tournament.knockout;
+    const matchesSource = tournament.live ? tournament.live.matches : knockout.matches;
+    const winners = matchesSource.map(match => match.winner).filter(Boolean);
     if (knockout.stage === stages.sessentaequatroavos) {
         state[mode].knockout = createKnockoutStage(stages.trintaedoisavos, winners);
     } else if (knockout.stage === stages.trintaedoisavos) {
@@ -2672,9 +2752,11 @@ function renderLiveKnockoutStage(mode) {
     if (!tournament.live || tournament.live.stage !== stage) {
         tournament.live = {
             stage,
-            matches: [...matches],
+            matches: [...matches].map(m => ({ ...m, extraTime1: Math.floor(Math.random() * 8) + 3, extraTime2: Math.floor(Math.random() * 8) + 3 })),
             currentIndex: 0,
             inProgress: false,
+            matchesStarted: false,
+            half: 1,
             minute: 0,
             history: []
         };
@@ -2709,7 +2791,23 @@ function renderLiveKnockoutStage(mode) {
         const statsPanelHtml = match.showStats ? renderLiveMatchStatsPanel(match, mode) : '';
         const historyPanelHtml = match.showHistory ? renderLiveMatchHistoryPanel(match) : '';
 
-        const formattedTimer = formatMatchTimer(match.seconds || 0);
+        const formattedTimer = formatMatchTimer(match);
+        let extraTimeText = '';
+        let isHalfTime = false;
+        if (tournament.live) {
+            let totalSeconds = match.seconds || 0;
+            let isFirstHalfPhase = tournament.live.half === 1 || (tournament.live.half === 2 && !match._startedHalf2);
+            
+            if (isFirstHalfPhase && totalSeconds >= 2700) {
+                extraTimeText = `+${match.extraTime1}:00`;
+            } else if (tournament.live.half === 2 && match._startedHalf2 && totalSeconds >= 5400) {
+                extraTimeText = `+${match.extraTime2}:00`;
+            }
+            
+            if (tournament.live.half === 2 && !match._startedHalf2) {
+                isHalfTime = true;
+            }
+        }
 
         return `
             <div class="knockout-match-block" id="match-block-${match.id}">
@@ -2719,6 +2817,7 @@ function renderLiveKnockoutStage(mode) {
                         <div class="match-score-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px;">
                             <span id="score-display-${match.id}" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 4px;">${score}</span>
                             <div id="timer-${match.id}" class="match-timer ${(match.seconds || 0) >= 5400 ? 'finished' : ''}">${formattedTimer}</div>
+                            <div id="extra-time-${match.id}" style="color: #4ade80; font-size: 0.85rem; font-weight: bold; margin-top: 2px;">${extraTimeText}</div>
                         </div>
                         <span class="match-team-b">${renderTeamLabel(match.teamB, { mode })}</span>
                     </div>
@@ -2748,6 +2847,15 @@ function renderLiveKnockoutStage(mode) {
         else if (stage === stages.final) nextStageButton = '<button id="goNext" class="success" style="background-color: gold; color: black; font-weight: bold; border: 2px solid #b8860b;">LEVANTAR TROFÉU 🏆</button>';
     }
 
+    let statusLineBtn = '';
+    if (tournament.live && tournament.live.half === 2 && !tournament.live.inProgress && !allMatchesFinished) {
+        statusLineBtn = '<button id="startLiveMatch" class="success">Iniciar 2° Tempo</button>';
+    } else if (!tournament.live || !tournament.live.matchesStarted) {
+        statusLineBtn = '<button id="startLiveMatch" class="success">Iniciar partidas</button>';
+    }
+
+    const isFinal = stage === stages.final;
+
     app.innerHTML = `
         <section class="card">
             <div class="title-group">
@@ -2761,12 +2869,12 @@ function renderLiveKnockoutStage(mode) {
                 </div>
             </div>
             <div class="status-line">
-                <button id="startLiveMatch" class="success">Iniciar partidas</button>
+                ${statusLineBtn}
                 ${nextStageButton}
             </div>
         </section>
         ${renderPlayerStatsTable(mode)}
-        <section class="knockout-list section-panel">${matchRows}</section>
+        <section class="knockout-list section-panel ${isFinal ? 'knockout-list-final' : ''}">${matchRows}</section>
 
         ${renderTournamentStats(mode, true)}
     `;
@@ -2777,10 +2885,14 @@ function renderLiveKnockoutStage(mode) {
         else setupTournamentSelection(mode);
     });
     
-    document.getElementById('startLiveMatch').addEventListener('click', () => {
-        if (tournament.live.inProgress) return;
-        startLiveMatch(mode);
-    });
+    const startBtn = document.getElementById('startLiveMatch');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            if (tournament.live.inProgress) return;
+            startBtn.style.display = 'none';
+            startLiveMatch(mode);
+        });
+    }
 
     app.querySelectorAll('.toggle-match-stats').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2840,7 +2952,8 @@ function renderLiveKnockoutStage(mode) {
     }
 }
 
-function formatMatchTimer(totalSeconds) {
+function formatMatchTimer(match) {
+    const totalSeconds = match.seconds || 0;
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
@@ -2865,9 +2978,22 @@ function updateLiveDOM(mode) {
 
         const timerEl = document.getElementById(`timer-${match.id}`);
         if (timerEl) {
-            timerEl.textContent = formatMatchTimer(match.seconds || 0);
-            if ((match.seconds || 0) >= 5400) {
+            timerEl.textContent = formatMatchTimer(match);
+            if ((match.seconds || 0) >= 5400 + (match.extraTime2 * 60)) {
                 timerEl.classList.add('finished');
+            }
+        }
+
+        const extraTimeEl = document.getElementById(`extra-time-${match.id}`);
+        if (extraTimeEl) {
+            let totalSeconds = match.seconds || 0;
+            let isFirstHalfPhase = tournament.live.half === 1 || (tournament.live.half === 2 && !match._startedHalf2);
+            if (isFirstHalfPhase && totalSeconds >= 2700) {
+                extraTimeEl.textContent = `+${match.extraTime1}:00`;
+            } else if (tournament.live.half === 2 && match._startedHalf2 && totalSeconds >= 5400) {
+                extraTimeEl.textContent = `+${match.extraTime2}:00`;
+            } else {
+                extraTimeEl.textContent = '';
             }
         }
 
@@ -2935,7 +3061,7 @@ function updateLiveDOM(mode) {
     if (leagueStatsContainer) {
         leagueStatsContainer.innerHTML = renderTournamentStats(mode, true);
     } else {
-        const mainStatsPanel = document.querySelector('section.stats-panel');
+        const mainStatsPanel = document.getElementById('tournament-stats-panel');
         if (mainStatsPanel) {
             const isExpanded = mainStatsPanel.querySelector('th') && (mainStatsPanel.querySelector('th').innerText.includes('Saldo') || mainStatsPanel.querySelector('th').innerText.includes('PTS'));
             mainStatsPanel.outerHTML = renderTournamentStats(mode, isExpanded);
@@ -2949,29 +3075,44 @@ function startLiveMatch(mode) {
     if (tournament.live.intervalId) clearInterval(tournament.live.intervalId);
 
     tournament.live.inProgress = true;
-    tournament.live.history = [];
-    tournament.live.minute = 0;
+    tournament.live.matchesStarted = true;
 
-    tournament.live.matches.forEach(match => {
-        match.goalsA = 0;
-        match.goalsB = 0;
-        match.minute = 0;
-        match.seconds = 0;
-        match.penalties = null;
-        match.winner = null;
-        match.matchHistory = [];
-        match._lastStats = getLiveMatchStats(match, 0);
-    });
+    // Apenas inicializa variáveis se for o 1º tempo
+    if (tournament.live.half === 1 && tournament.live.matches.every(m => m.seconds === 0 || m.seconds === undefined)) {
+        tournament.live.history = [];
+        tournament.live.minute = 0;
+        tournament.live.matches.forEach(match => {
+            match.goalsA = 0;
+            match.goalsB = 0;
+            match.minute = 0;
+            match.seconds = 0;
+            match.penalties = null;
+            match.winner = null;
+            match.matchHistory = [];
+            match._lastStats = getLiveMatchStats(match, 0);
+        });
+    } else if (tournament.live.half === 2 && tournament.live.matches.every(m => !m._startedHalf2)) {
+        tournament.live.minute = 45;
+        tournament.live.matches.forEach(match => {
+            match.seconds = 2700;
+            match.minute = 45;
+            match._startedHalf2 = true;
+        });
+    }
+
+    const isFinal = tournament.live.stage === stages.final;
 
     tournament.live.intervalId = setInterval(() => {
         let allFinished = true;
         
         tournament.live.matches.forEach(match => {
-            if (match.seconds >= 5400) return;
+            let maxSeconds = tournament.live.half === 1 ? 2700 + (match.extraTime1 * 60) : 5400 + (match.extraTime2 * 60);
+            if (match.seconds >= maxSeconds) return;
             allFinished = false;
             
-            match.seconds += Math.floor(Math.random() * 12) + 4;
-            if (match.seconds > 5400) match.seconds = 5400;
+            let speed = isFinal ? 3 : (Math.floor(Math.random() * 12) + 4);
+            match.seconds += speed;
+            if (match.seconds > maxSeconds) match.seconds = maxSeconds;
             match.minute = Math.floor(match.seconds / 60);
 
             const strengthA = match.teamA.strength || 50;
@@ -2988,14 +3129,16 @@ function startLiveMatch(mode) {
 
             if (Math.random() < chanceA) {
                 match.goalsA += 1;
-                updateTeamStats(match.teamA, 1, 0, {shots:1});
-                updateTeamStats(match.teamB, 0, 1, {});
+                match.teamA.goalsFor = (match.teamA.goalsFor || 0) + 1;
+                match.teamB.goalsAgainst = (match.teamB.goalsAgainst || 0) + 1;
+                match.teamA.shots = (match.teamA.shots || 0) + 1;
                 match.matchHistory.unshift({ minute: match.minute, type: 'goal', teamName: match.teamA.name });
             }
             if (Math.random() < chanceB) {
                 match.goalsB += 1;
-                updateTeamStats(match.teamB, 1, 0, {shots:1});
-                updateTeamStats(match.teamA, 0, 1, {});
+                match.teamB.goalsFor = (match.teamB.goalsFor || 0) + 1;
+                match.teamA.goalsAgainst = (match.teamA.goalsAgainst || 0) + 1;
+                match.teamB.shots = (match.teamB.shots || 0) + 1;
                 match.matchHistory.unshift({ minute: match.minute, type: 'goal', teamName: match.teamB.name });
             }
 
@@ -3035,12 +3178,37 @@ function startLiveMatch(mode) {
         if (allFinished) {
             clearInterval(tournament.live.intervalId);
             tournament.live.inProgress = false;
-            tournament.live.matches.forEach((match) => {
-                if (match.goalsA !== match.goalsB) {
-                    match.winner = match.goalsA > match.goalsB ? match.teamA : match.teamB;
-                }
-            });
-            renderLiveKnockoutStage(mode);
+            
+            if (tournament.live.half === 1) {
+                tournament.live.half = 2;
+                renderLiveKnockoutStage(mode);
+            } else {
+                tournament.live.matches.forEach((match) => {
+                    // Update final match stats like played matches and points for the final ranking
+                    match.teamA.played = (match.teamA.played || 0) + 1;
+                    match.teamB.played = (match.teamB.played || 0) + 1;
+                    
+                    if (match.goalsA > match.goalsB) {
+                        match.teamA.wins = (match.teamA.wins || 0) + 1;
+                        match.teamA.points = (match.teamA.points || 0) + 3;
+                        match.teamB.losses = (match.teamB.losses || 0) + 1;
+                    } else if (match.goalsA < match.goalsB) {
+                        match.teamB.wins = (match.teamB.wins || 0) + 1;
+                        match.teamB.points = (match.teamB.points || 0) + 3;
+                        match.teamA.losses = (match.teamA.losses || 0) + 1;
+                    } else {
+                        match.teamA.draws = (match.teamA.draws || 0) + 1;
+                        match.teamA.points = (match.teamA.points || 0) + 1;
+                        match.teamB.draws = (match.teamB.draws || 0) + 1;
+                        match.teamB.points = (match.teamB.points || 0) + 1;
+                    }
+                    
+                    if (match.goalsA !== match.goalsB) {
+                        match.winner = match.goalsA > match.goalsB ? match.teamA : match.teamB;
+                    }
+                });
+                renderLiveKnockoutStage(mode);
+            }
         }
     }, 120);
 }

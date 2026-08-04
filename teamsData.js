@@ -151,6 +151,31 @@ const leagueData = {
             { image: 'img/Brasil/mira.svg', name: 'Mirassol', strength: 74, nation: 'Brasil' }
         ]
     },
+    brasil_b: {
+        label: 'Liga Brasil (Série B)',
+        teams: [
+            { image: 'img/paises/brasil.svg', name: 'Sport Recife', strength: 74, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Coritiba', strength: 73, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Goiás', strength: 73, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'América-MG', strength: 73, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Novorizontino', strength: 72, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Vila Nova', strength: 72, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Criciúma', strength: 72, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Juventude', strength: 71, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Avaí', strength: 71, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Guarani', strength: 70, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Ponte Preta', strength: 70, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'CRB', strength: 70, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Paysandu', strength: 70, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Botafogo-SP', strength: 69, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Ituano', strength: 69, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Tombense', strength: 68, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Londrina', strength: 68, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Sampaio Corrêa', strength: 68, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'Ituano', strength: 67, nation: 'Brasil' },
+            { image: 'img/paises/brasil.svg', name: 'ABC', strength: 67, nation: 'Brasil' }
+        ]
+    },
     italia: {
         label: 'Liga Itália',
         teams: [
@@ -176,6 +201,31 @@ const leagueData = {
             { image: 'img/Italia/venezia.svg', name: 'Venezia', strength: 73, nation: 'Itália' }
         ]
     },
+    italia_b: {
+        label: 'Liga Itália (Serie B)',
+        teams: [
+            { image: 'img/paises/italia.svg', name: 'Sampdoria', strength: 73, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Spezia', strength: 73, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Cremonese', strength: 72, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Bari', strength: 72, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Palermo', strength: 71, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Pisa', strength: 71, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Salernitana', strength: 70, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Ternana', strength: 70, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Ascoli', strength: 69, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Brescia', strength: 69, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Cittadella', strength: 68, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Frosinone', strength: 68, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Cosenza', strength: 67, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Südtirol', strength: 67, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Reggiana', strength: 66, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Feralpisalò', strength: 66, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Lecco', strength: 65, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Catanzaro', strength: 65, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Modena', strength: 64, nation: 'Itália' },
+            { image: 'img/paises/italia.svg', name: 'Sassuolo', strength: 64, nation: 'Itália' }
+        ]
+    },
     inglaterra: {
         label: 'Liga Inglaterra',
         teams: [
@@ -199,6 +249,31 @@ const leagueData = {
             { image: 'img/inglaterra/leicester.svg', name: 'Leicester City', strength: 75, nation: 'Inglaterra' },
             { image: 'img/inglaterra/south.svg', name: 'Southampton', strength: 74, nation: 'Inglaterra' },
             { image: 'img/inglaterra/sheffield.svg', name: 'Sheffield United', strength: 73, nation: 'Inglaterra' }
+        ]
+    },
+    inglaterra_b: {
+        label: 'Liga Inglaterra (Championship)',
+        teams: [
+            { image: 'img/paises/inglaterra.svg', name: 'Leeds United', strength: 77, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Sheffield Wednesday', strength: 76, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Derby County', strength: 76, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Ipswich Town', strength: 75, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'West Bromwich', strength: 74, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Norwich City', strength: 74, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Hull City', strength: 73, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Coventry City', strength: 73, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Middlesbrough', strength: 72, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Preston North End', strength: 72, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Bristol City', strength: 71, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Cardiff City', strength: 71, nation: 'País de Gales' },
+            { image: 'img/paises/inglaterra.svg', name: 'Sunderland', strength: 70, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Swansea City', strength: 70, nation: 'País de Gales' },
+            { image: 'img/paises/inglaterra.svg', name: 'Watford', strength: 69, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Millwall', strength: 69, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Blackburn Rovers', strength: 68, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Stoke City', strength: 68, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'QPR', strength: 67, nation: 'Inglaterra' },
+            { image: 'img/paises/inglaterra.svg', name: 'Birmingham City', strength: 67, nation: 'Inglaterra' }
         ]
     },
     franca: {
@@ -247,6 +322,31 @@ const leagueData = {
             { image: 'img/alemanha/hertha.svg', name: 'Hertha BSC', strength: 72, nation: 'Alemanha' }
         ]
     },
+    alemanha_b: {
+        label: 'Liga Alemanha (Bundesliga 2)',
+        teams: [
+            { image: 'img/paises/alemanha.svg', name: 'Darmstadt 98', strength: 75, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Hamburger SV', strength: 74, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'SC Paderborn', strength: 73, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'St. Pauli', strength: 73, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Fortuna Düsseldorf', strength: 72, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Holstein Kiel', strength: 72, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Hannover 96', strength: 71, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Paderborn', strength: 71, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Karlsruher SC', strength: 70, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Greuther Fürth', strength: 70, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Nürnberg', strength: 69, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Magdeburg', strength: 69, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Wehen Wiesbaden', strength: 68, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Kaiserslautern', strength: 68, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Hansa Rostock', strength: 67, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Elversberg', strength: 67, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Eintracht Braunschweig', strength: 66, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Osnabrück', strength: 66, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'Arminia Bielefeld', strength: 65, nation: 'Alemanha' },
+            { image: 'img/paises/alemanha.svg', name: 'SV Sandhausen', strength: 65, nation: 'Alemanha' }
+        ]
+    },
     espanha: {
         label: 'Liga Espanha',
         teams: [
@@ -270,6 +370,31 @@ const leagueData = {
             { image: 'img/espanha/espanyol.svg', name: 'Espanyol', strength: 74, nation: 'Espanha' },
             { image: 'img/espanha/valladoid.svg', name: 'Real Valladolid', strength: 73, nation: 'Espanha' },
             { image: 'img/espanha/grana.svg', name: 'Granada', strength: 73, nation: 'Espanha' }
+        ]
+    },
+    espanha_b: {
+        label: 'Liga Espanha (La Liga 2)',
+        teams: [
+            { image: 'img/paises/espanha.svg', name: 'Almería', strength: 74, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Eibar', strength: 73, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Sporting Gijón', strength: 73, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Real Oviedo', strength: 72, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Racing Santander', strength: 72, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Levante', strength: 72, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Burgos', strength: 71, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Elche', strength: 71, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Tenerife', strength: 71, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Real Zaragoza', strength: 70, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Cartagena', strength: 70, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Huesca', strength: 70, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Eldense', strength: 69, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Albacete', strength: 69, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Mirandés', strength: 68, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Amorebieta', strength: 68, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Alcorcón', strength: 67, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'FC Andorra', strength: 67, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Villarreal B', strength: 66, nation: 'Espanha' },
+            { image: 'img/paises/espanha.svg', name: 'Leganés', strength: 74, nation: 'Espanha' }
         ]
     },
     argentina: {
@@ -395,7 +520,7 @@ const leagueData = {
             { image: 'img/holanda/psv.svg', name: 'PSV', strength: 82, nation: 'Holanda' },
             { image: 'img/holanda/feye.svg', name: 'Feyenoord', strength: 81, nation: 'Holanda' },
             { image: 'img/holanda/alkmaar.svg', name: 'AZ Alkmaar', strength: 78, nation: 'Holanda' },
-            { image: 'img/holanda/excelior.svg', name: 'Excelsior', strength: 78, nation: 'Holanda' },
+            { image: 'img/holanda/excelsior.svg', name: 'Excelsior', strength: 78, nation: 'Holanda' },
             { image: 'img/holanda/twente.svg', name: 'Twente', strength: 76, nation: 'Holanda' },
             { image: 'img/holanda/utrechet.svg', name: 'Utrecht', strength: 75, nation: 'Holanda' },
             { image: 'img/holanda/heerenveen.svg', name: 'Heerenveen', strength: 73, nation: 'Holanda' },
@@ -454,6 +579,29 @@ const leagueData = {
             { image: 'img/portugal/morei.svg', name: 'Moreirense', strength: 74, nation: 'Portugal' },
             { image: 'img/portugal/madeira.svg', name: 'Nacional', strength: 71, nation: 'Portugal' },
             { image: 'img/portugal/santa.svg', name: 'Santa Clara', strength: 72, nation: 'Portugal' }
+        ]
+    },
+    portugal_b: {
+        label: 'Liga Portugal 2',
+        teams: [
+            { image: 'img/paises/portugal.svg', name: 'Marítimo', strength: 72, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Portimonense', strength: 71, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'AVS', strength: 71, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Paços de Ferreira', strength: 70, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Tondela', strength: 70, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Torreense', strength: 69, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Benfica B', strength: 69, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Porto B', strength: 68, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Mafra', strength: 68, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'União de Leiria', strength: 67, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Penafiel', strength: 67, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Leixões', strength: 66, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Feirense', strength: 66, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Oliveirense', strength: 65, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Académico de Viseu', strength: 65, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Vilaverdense', strength: 64, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Belenenses', strength: 64, nation: 'Portugal' },
+            { image: 'img/paises/portugal.svg', name: 'Trofense', strength: 63, nation: 'Portugal' }
         ]
     },
     suecia: {
@@ -805,11 +953,7 @@ const leagueData = {
             { image: 'img/peru/garcilaso.svg', name: 'Deportivo Garcilaso', strength: 71, nation: 'Peru' },
             { image: 'img/peru/alianza_atle.svg', name: 'Alianza Atlético', strength: 70, nation: 'Peru' },
             { image: 'img/peru/boys.svg', name: 'Sport Boys', strength: 70, nation: 'Peru' },
-            { image: 'img/peru/adt.svg', name: 'Asociación Deportiva Tarma', strength: 69, nation: 'Peru' },
-            { image: 'img/peru/pablo.svg', name: 'ADC Juan Pablo II', strength: 88, nation: 'Peru' },
-            { image: 'img/peru/grau.svg', name: 'Atlético Grau', strength: 68, nation: 'Peru' },
-            { image: 'img/peru/chankas.svg', name: 'Los Chankas', strength: 67, nation: 'Peru' },
-            { image: 'img/peru/comerciantes.svg', name: 'Comerciantes Unidos', strength: 67, nation: 'Peru' }
+            { image: 'img/peru/adt.svg', name: 'Asociación Deportiva Tarma', strength: 69, nation: 'Peru' }
         ]
     },
     uruguai: {
@@ -833,6 +977,157 @@ const leagueData = {
             { image: 'img/uruguai/largo.svg', name: 'Cerro Largo', strength: 68, nation: 'Uruguai' }
         ]
     },
+    austria: {
+        label: 'Liga Áustria',
+        teams: [
+            { image: 'img/paises/austria.svg', name: 'RB Salzburg', strength: 80, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Sturm Graz', strength: 78, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'LASK', strength: 76, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Rapid Wien', strength: 75, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Austria Wien', strength: 74, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Wolfsberger AC', strength: 73, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Klagenfurt', strength: 72, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Hartberg', strength: 71, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Altach', strength: 70, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Tirol', strength: 70, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Blau-Weiß Linz', strength: 69, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Lustenau', strength: 68, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Grazer AK', strength: 67, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Ried', strength: 66, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Admira Wacker', strength: 65, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'St. Pölten', strength: 64, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Liefering', strength: 63, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'FAC', strength: 62, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Dornbirn', strength: 61, nation: 'Áustria' },
+            { image: 'img/paises/austria.svg', name: 'Horn', strength: 60, nation: 'Áustria' }
+        ]
+    },
+    dinamarca: {
+        label: 'Liga Dinamarca',
+        teams: [
+            { image: 'img/paises/dinamarca.svg', name: 'FC Copenhagen', strength: 79, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Midtjylland', strength: 78, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Nordsjælland', strength: 76, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Brøndby', strength: 75, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'AGF', strength: 74, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Silkeborg', strength: 73, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Viborg', strength: 72, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Odense BK', strength: 71, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Randers FC', strength: 70, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Lyngby', strength: 69, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Vejle', strength: 68, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Hvidovre', strength: 67, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'AaB', strength: 66, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'SønderjyskE', strength: 65, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Horsens', strength: 64, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Hobro', strength: 63, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Vendsyssel', strength: 62, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Hillerød', strength: 61, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'Næstved', strength: 60, nation: 'Dinamarca' },
+            { image: 'img/paises/dinamarca.svg', name: 'HB Køge', strength: 59, nation: 'Dinamarca' }
+        ]
+    },
+    china: {
+        label: 'Liga China',
+        teams: [
+            { image: 'img/paises/china.svg', name: 'Shanghai Port', strength: 75, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Shandong Taishan', strength: 74, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Shanghai Shenhua', strength: 73, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Zhejiang', strength: 72, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Chengdu Rongcheng', strength: 71, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Beijing Guoan', strength: 71, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Wuhan Three Towns', strength: 70, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Tianjin Jinmen Tiger', strength: 69, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Changchun Yatai', strength: 68, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Henan', strength: 67, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Meizhou Hakka', strength: 66, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Cangzhou Mighty Lions', strength: 65, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Qingdao Hainiu', strength: 64, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Nantong Zhiyun', strength: 63, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Shenzhen', strength: 62, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Dalian Pro', strength: 61, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Guangzhou FC', strength: 60, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Sichuan Jiuniu', strength: 59, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Qingdao West Coast', strength: 58, nation: 'China' },
+            { image: 'img/paises/china.svg', name: 'Jiangxi Beidamen', strength: 57, nation: 'China' }
+        ]
+    },
+    croacia: {
+        label: 'Liga Croácia',
+        teams: [
+            { image: 'img/paises/croacia.svg', name: 'Dinamo Zagreb', strength: 79, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Hajduk Split', strength: 76, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Rijeka', strength: 74, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Osijek', strength: 73, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Lokomotiva Zagreb', strength: 71, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Gorica', strength: 70, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Slaven Belupo', strength: 69, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Varaždin', strength: 68, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Istra 1961', strength: 67, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Rudeš', strength: 66, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Šibenik', strength: 65, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Zrinski', strength: 64, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Vukovar', strength: 63, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Dubrava', strength: 62, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Croatia Zmijavci', strength: 61, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Sesvete', strength: 60, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Cibalia', strength: 59, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Dugopolje', strength: 58, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'BSK Bijelo Brdo', strength: 57, nation: 'Croácia' },
+            { image: 'img/paises/croacia.svg', name: 'Orijent', strength: 56, nation: 'Croácia' }
+        ]
+    },
+    ucrania: {
+        label: 'Liga Ucrânia',
+        teams: [
+            { image: 'img/paises/ucrania.svg', name: 'Shakhtar Donetsk', strength: 80, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Dynamo Kyiv', strength: 79, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Dnipro-1', strength: 77, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Kryvbas', strength: 75, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Rukh Lviv', strength: 74, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Zorya Luhansk', strength: 73, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Vorskla', strength: 72, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Chornomorets', strength: 71, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'LNZ Cherkasy', strength: 70, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Polissya', strength: 70, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Kolos Kovalivka', strength: 69, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Oleksandriya', strength: 69, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Obolon', strength: 68, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Veres', strength: 67, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Metalist 1925', strength: 66, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Minaj', strength: 65, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Karpaty Lviv', strength: 64, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Inhulets', strength: 63, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Livyi Bereh', strength: 62, nation: 'Ucrânia' },
+            { image: 'img/paises/ucrania.svg', name: 'Epitsentr', strength: 61, nation: 'Ucrânia' }
+        ]
+    },
+    servia: {
+        label: 'Liga Sérvia',
+        teams: [
+            { image: 'img/paises/servia.svg', name: 'Crvena Zvezda', strength: 79, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Partizan', strength: 77, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'TSC Backa Topola', strength: 75, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Čukarički', strength: 74, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Vojvodina', strength: 73, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Radnički 1923', strength: 72, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Mladost Lučani', strength: 71, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Novi Pazar', strength: 70, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Napredak', strength: 69, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Spartak Subotica', strength: 68, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'IMT', strength: 67, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Javor', strength: 66, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Radnički Niš', strength: 65, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Železničar', strength: 64, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Radnik Surdulica', strength: 63, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Voždovac', strength: 63, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'OFK Beograd', strength: 62, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Jedinstvo Ub', strength: 61, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Inđija', strength: 60, nation: 'Sérvia' },
+            { image: 'img/paises/servia.svg', name: 'Tekstilac', strength: 59, nation: 'Sérvia' }
+        ]
+    }
+
 };
 
 export default leagueData;

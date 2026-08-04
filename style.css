@@ -256,7 +256,7 @@ button.success:hover {
 .team-card {
     padding: 14px 16px;
     border-radius: 18px;
-    background: rgba(255,255,255,0.05);
+    background: var(--surface);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -879,13 +879,27 @@ table.stats-table tr + tr td {
 }
 
 .btn-feedback {
-    background: #05611c !important;
+    background-color: #05611c !important;
     color: #ffffff !important;
+    border-radius: 0.625em;
+    font-size: 16px;
+    font-weight: bold;
     padding: 0 18px;
-    width: auto; 
+    min-height: 3.5em; 
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s;
+}
+
+.btn-feedback:hover {
+    background-color: #044b15 !important;
+}
+
+.btn-feedback:active {
+    transform: translateY(2px);
 }
 
 .btn-feedback::after {
@@ -1122,17 +1136,6 @@ table.stats-table tr + tr td {
     border-radius: 4px;
 }
 
-/* Breakpoint para Tablets e telas médias (<= 860px) */
-@media (max-width: 860px) {
-    .top-external-links {
-        position: static;
-        margin: 0 auto 16px auto;
-        justify-content: center;
-        width: 100%;
-        flex-wrap: wrap;
-    }
-}
-
 /* Breakpoint para Dispositivos Móveis (<= 600px) */
 @media (max-width: 600px) {
     body {
@@ -1144,24 +1147,20 @@ table.stats-table tr + tr td {
     }
 
     .top-external-links {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        margin: 0;
-        padding: 8px;
-        background: var(--bg);
-        border-top: 1px solid rgba(255,255,255,0.1);
-        z-index: 1000;
+        position: static;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        margin: 60px auto 16px auto;
         width: 100%;
-        box-sizing: border-box;
     }
 
     .top-external-links button {
-        flex: 1;
-        font-size: 12px;
-        padding: 0 4px;
-        min-height: 3.2em;
-        text-align: center;
+        font-size: 12px !important;
+        padding: 6px 16px !important;
+        min-height: 32px !important;
+        width: auto !important;
     }
 
     .card {
@@ -1834,6 +1833,11 @@ table.stats-table tr + tr td {
 @media (min-width: 768px) {
     .knockout-list {
         grid-template-columns: repeat(2, 1fr);
+    }
+    .knockout-list.knockout-list-final {
+        grid-template-columns: 1fr;
+        max-width: 800px;
+        margin: 0 auto;
     }
 }
 
