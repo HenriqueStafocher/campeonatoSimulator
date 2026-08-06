@@ -1084,7 +1084,7 @@ function renderSimpleSpecial(title, description) {
                 <span>Rodada atual: <strong>0 / ${state.schedule.length}</strong></span>
             </div>
             
-            <div class="section-panel" style="position: relative; z-index: 10;">
+            <div class="simulate-buttons-container">
                 <button id="simulateRound" class="success">Simular rodada</button>
                 <button id="simulateAll" class="success">Simular campeonato</button>
             </div>
@@ -1312,7 +1312,7 @@ function getLeagueGoals(teamA, teamB) {
     
     const diff = (strengthA - strengthB) / 80;
     
-    let probA = 0.35 + diff; 
+    let probA = 0.35 + diff + (diff > 0 ? 0.05 : (diff < 0 ? -0.05 : 0)); 
     let probTie = 0.30 - (Math.abs(diff) * 0.05); 
     
     probTie = Math.max(0.20, Math.min(0.40, probTie)); 
@@ -1364,7 +1364,7 @@ function getTournamentGoals(teamA, teamB) {
     
     const diff = (strengthA - strengthB) / 40;
     
-    let probA = 0.40 + diff; 
+    let probA = 0.40 + diff + (diff > 0 ? 0.05 : (diff < 0 ? -0.05 : 0)); 
     let probTie = 0.25 - (Math.abs(diff) * 0.1); 
     
     probTie = Math.max(0.15, Math.min(0.35, probTie)); 
@@ -1597,7 +1597,7 @@ function renderLeagueSimulator(key) {
                 </div>
             </div>
             
-            <div class="section-panel" style="position: relative; z-index: 10;">
+            <div class="simulate-buttons-container">
                 <button id="simulateRound" class="success">Simular rodada</button>
                 <button id="simulateAll" class="success">Simular campeonato</button>
             </div>
@@ -3071,6 +3071,8 @@ function updateLiveDOM(mode) {
 
 function startLiveMatch(mode) {
     const tournament = state[mode];
+    const btn = document.getElementById('startLiveMatch');
+    if (btn) btn.style.display = 'none';
     
     if (tournament.live.intervalId) clearInterval(tournament.live.intervalId);
 
