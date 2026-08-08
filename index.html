@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="favicon.png" type="image/x-icon">
     <title>Futebor Simulator - Seu Simulador de Futebol Perfeito</title>
-    <link rel="stylesheet" href="style.css?v=202608032355">
+    <script>
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+        document.body.innerHTML += '<div style="background:red;color:white;position:fixed;top:0;left:0;z-index:99999;width:100%;padding:20px;text-align:left;overflow:auto;"><h3 style="color:white;margin-top:0;">Global Error</h3><pre>' + msg + '\\n' + url + ':' + lineNo + '\\n' + (error ? error.stack : '') + '</pre></div>';
+        return false;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+        document.body.innerHTML += '<div style="background:red;color:white;position:fixed;top:0;left:0;z-index:99999;width:100%;padding:20px;text-align:left;overflow:auto;"><h3 style="color:white;margin-top:0;">Unhandled Promise Rejection</h3><pre>' + event.reason + '</pre></div>';
+    });
+    </script>
+    <link rel="stylesheet" href="style.css?v=202608080924">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bevan&family=Patua+One&display=swap" rel="stylesheet">
@@ -33,7 +42,7 @@
             <main id="app"></main>
             <footer>Desenvolvido por Stafocher</footer>
         </div>
-        <script type="module" src="script.js?v=202608040038"></script>
+        <script type="module" src="script.js?v=202608081045"></script>
     </section>
 </body>
 </html>

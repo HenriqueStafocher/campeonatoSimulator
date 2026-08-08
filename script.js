@@ -132,25 +132,42 @@ const stages = {
     duzentosecinquentaeseisavos: 'duzentosecinquentaeseisavos' 
 };
 
+function getSavedLeaguePoints() {
+    try {
+        const item = localStorage.getItem('multiplayerLeaguePoints');
+        if (item && item !== 'undefined') {
+            return JSON.parse(item);
+        }
+    } catch (e) {
+        console.warn('Erro ao carregar leaguePoints:', e);
+    }
+    return {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+}
+
 const state = {
+    currentScreen: 'main', 
+    currentMode: null,     
     leagueKey: null,
-    leagueTeams: [],
-    schedule: [],
+    leagueTeams: null,
+    schedule: null,
     currentRound: 0,
-    isScoresPanelOpen: false, 
+    leaguePointsAwarded: false,
+    lastAwardedPoints: {},
+    isScoresPanelOpen: false,
+    
     multiplayer: {
         numPlayers: 1,
         activePlayer: 1,
-        playerAssignments: {}, 
         colors: {
-            1: '#3a86ff', 
-            2: '#ffd60a', 
-            3: '#ff006e', 
-            4: '#06d6a0', 
-            5: '#9d4edd', 
+            1: '#3498db',
+            2: '#e74c3c',
+            3: '#2ecc71',
+            4: '#f1c40f',
+            5: '#9b59b6',
             6: '#ff6b6b'
         },
-        leaguePoints: JSON.parse(localStorage.getItem('multiplayerLeaguePoints')) || {1:0, 2:0, 3:0, 4:0, 5:0, 6:0}
+        leaguePoints: getSavedLeaguePoints(),
+        playerAssignments: {}
     },
     libertadores: {
         selectedIds: new Set(),
@@ -209,6 +226,122 @@ const state = {
         targetSize: 48
     }
 };
+
+function stateReplacer(key, value) {
+    if (value instanceof Set) {
+        return { __type: 'Set', value: Array.from(value) };
+    }
+    if (key === 'intervalId') return null;
+    return value;
+}
+
+function stateReviver(key, value) {
+    if (value && typeof value === 'object' && value.__type === 'Set') {
+        return new Set(value.value);
+    }
+    return value;
+}
+
+function saveState() {
+    try {
+        localStorage.setItem('simulatorState', JSON.stringify(state, stateReplacer));
+    } catch (e) {
+        console.error('Error saving state', e);
+    }
+}
+
+function loadState() {
+    try {
+        const saved = localStorage.getItem('simulatorState');
+        if (saved) {
+            const parsed = JSON.parse(saved, stateReviver);
+            Object.assign(state, parsed);
+            
+            // Reconnect object references
+            reconnectReferences();
+
+            // Clean up running intervals
+            const modes = ['libertadores', 'custom', 'worldCup', 'championsleague'];
+            modes.forEach(mode => {
+                if (state[mode] && state[mode].live) {
+                    state[mode].live.inProgress = false;
+                    state[mode].live.intervalId = null;
+                }
+            });
+            
+            return true;
+        }
+    } catch (e) {
+        console.error('Error loading state', e);
+    }
+    return false;
+}
+
+function reconnectReferences() {
+    // League
+    if (state.leagueTeams && state.schedule) {
+        const map = new Map(state.leagueTeams.map(t => [t.id, t]));
+        for (const round of state.schedule) {
+            for (const match of round) {
+                if (match.teamA && map.has(match.teamA.id)) match.teamA = map.get(match.teamA.id);
+                if (match.teamB && map.has(match.teamB.id)) match.teamB = map.get(match.teamB.id);
+            }
+        }
+    }
+    // Tournaments
+    const modes = ['libertadores', 'custom', 'worldCup', 'championsleague'];
+    for (const mode of modes) {
+        const trn = state[mode];
+        if (trn && trn.selectedTeams) {
+            const map = new Map(trn.selectedTeams.map(t => [t.id, t]));
+            if (trn.groups) {
+                for (const group of trn.groups) {
+                    if (group.teams) {
+                        group.teams = group.teams.map(t => map.get(t.id) || t);
+                    }
+                    if (group.rounds) {
+                        for (const round of (group.rounds || [])) {
+                            for (const match of (round || [])) {
+                                if (match.teamA && map.has(match.teamA.id)) match.teamA = map.get(match.teamA.id);
+                                if (match.teamB && map.has(match.teamB.id)) match.teamB = map.get(match.teamB.id);
+                            }
+                        }
+                    }
+                }
+            }
+            if (trn.groupHistory) {
+                for (const match of (trn.groupHistory || [])) {
+                    if (match.teamA && map.has(match.teamA.id)) match.teamA = map.get(match.teamA.id);
+                    if (match.teamB && map.has(match.teamB.id)) match.teamB = map.get(match.teamB.id);
+                }
+            }
+            if (trn.knockout) {
+                if (Array.isArray(trn.knockout.matches)) {
+                    for (const match of trn.knockout.matches) {
+                        if (match.teamA && map.has(match.teamA.id)) match.teamA = map.get(match.teamA.id);
+                        if (match.teamB && map.has(match.teamB.id)) match.teamB = map.get(match.teamB.id);
+                    }
+                }
+            }
+            if (trn.knockoutHistory) {
+                for (const history of (trn.knockoutHistory || [])) {
+                    if (Array.isArray(history.matches)) {
+                        for (const match of history.matches) {
+                            if (match.teamA && map.has(match.teamA.id)) match.teamA = map.get(match.teamA.id);
+                            if (match.teamB && map.has(match.teamB.id)) match.teamB = map.get(match.teamB.id);
+                        }
+                    }
+                }
+            }
+            if (trn.live && Array.isArray(trn.live.matches)) {
+                for (const match of trn.live.matches) {
+                    if (match.teamA && map.has(match.teamA.id)) match.teamA = map.get(match.teamA.id);
+                    if (match.teamB && map.has(match.teamB.id)) match.teamB = map.get(match.teamB.id);
+                }
+            }
+        }
+    }
+}
 
 function shuffle(array) {
     const copy = [...array];
@@ -288,9 +421,9 @@ function getTournamentTeamsForStats(mode) {
     return tournament?.selectedTeams || [];
 }
 
-function renderTournamentStats(mode, expanded = false) {
+function getTournamentStatsTableContent(mode, expanded = false) {
     const teams = getTournamentTeamsForStats(mode);
-    if (!teams.length) return '';
+    if (!teams.length) return { thead: '', tbody: '' };
     
     // Fallback initialize
     teams.forEach(t => {
@@ -350,6 +483,13 @@ function renderTournamentStats(mode, expanded = false) {
     }
 
     const rows = sortedTeams.map(rowMapper).join('');
+    return { thead, tbody: rows };
+}
+
+function renderTournamentStats(mode, expanded = false) {
+    const content = getTournamentStatsTableContent(mode, expanded);
+    if (!content.tbody) return '';
+    const activeTab = state.activeStatsTab || 'goals';
 
     const getBtnColor = (tab) => {
         if (tab === 'goals') return '#2ecc71'; 
@@ -383,8 +523,8 @@ function renderTournamentStats(mode, expanded = false) {
 
             <div class="table-wrapper">
                 <table class="stats-table">
-                    <thead>${thead}</thead>
-                    <tbody>${rows}</tbody>
+                    <thead>${content.thead}</thead>
+                    <tbody>${content.tbody}</tbody>
                 </table>
             </div>
         </section>
@@ -496,6 +636,9 @@ function renderPlayerStatsTable(mode) {
 }
 
 function renderMainScreen() {
+    state.currentScreen = 'main';
+    state.currentMode = null;
+    localStorage.removeItem('simulatorState');
     state.isScoresPanelOpen = false;
 
     const buttons = leagueButtons.map(button => {
@@ -687,6 +830,9 @@ function setupLeagueAssignment(key) {
 }
 
 function renderLeagueAssignment(key) {
+    state.currentScreen = 'leagueAssignment';
+    state.currentMode = key;
+    saveState();
     const league = leagueData[key];
     
     let playerButtons = '';
@@ -715,7 +861,7 @@ function renderLeagueAssignment(key) {
         <section class="card">
             <div class="title-group">
                 <div>
-                    <h2>${league.label} - Atribuir Times</h2>
+                    <h2>${leagueData[key].label} - Atribuir Times</h2>
                     <p class="description">Clique nos times para atribuí-los ao Player selecionado. Quando terminar, clique em Iniciar Liga.</p>
                 </div>
                 <div class="header-action-buttons">
@@ -731,6 +877,7 @@ function renderLeagueAssignment(key) {
     
     document.getElementById('backButton').addEventListener('click', renderMainScreen);
     document.getElementById('startLeagueBtn').addEventListener('click', () => {
+        state.schedule = null;
         renderLeagueSimulator(key);
     });
     
@@ -850,6 +997,9 @@ function getMaxGroupRounds(mode) {
 }
 
 function renderTournamentSelection(mode) {
+    state.currentScreen = 'tournamentSelection';
+    state.currentMode = mode;
+    saveState();
     const tournament = state[mode];
     const groups = {};
 
@@ -1182,6 +1332,7 @@ function simulateLeagueRound() {
     
     const statsTabsContainer = document.getElementById('leagueStatsTabsContainer');
     if (statsTabsContainer) statsTabsContainer.innerHTML = renderTournamentStats(state.leagueKey, true);
+    saveState();
 }
 
 function simulateLeagueAll() {
@@ -1201,6 +1352,7 @@ function simulateLeagueAll() {
     
     const statsTabsContainer = document.getElementById('leagueStatsTabsContainer');
     if (statsTabsContainer) statsTabsContainer.innerHTML = renderTournamentStats(state.leagueKey, true);
+    saveState();
 }
 
 function checkLeagueFinished() {
@@ -1335,6 +1487,27 @@ function getLeagueGoals(teamA, teamB) {
     return [goalsA, goalsB, generateLeagueStats(teamA), generateLeagueStats(teamB)];
 }
 
+const generateStatsForTeam = (team) => {
+    const curPens = (team.penaltiesScored || 0) + (team.penaltiesMissed || 0);
+    let penaltiesScored = 0;
+    let penaltiesMissed = 0;
+    if (curPens < 10 && Math.random() < 0.15) {
+        if (Math.random() < 0.75) penaltiesScored = 1;
+        else penaltiesMissed = 1;
+    }
+    
+    let yellows = Math.floor(Math.random() * 3);
+    if (Math.random() < 0.2) yellows += 1;
+    
+    let reds = 0;
+    if (Math.random() < 0.12) reds = 1;
+    
+    let fouls = Math.floor(Math.random() * 4) + 1;
+    let shots = Math.floor(Math.random() * 10) + 5; 
+    
+    return { penaltiesScored, penaltiesMissed, yellows, reds, fouls, shots };
+};
+
 function getTournamentGoals(teamA, teamB) {
     const strengthA = Math.max(1, getEffectiveStrength(teamA));
     const strengthB = Math.max(1, getEffectiveStrength(teamB));
@@ -1363,7 +1536,7 @@ function getTournamentGoals(teamA, teamB) {
         goalsA = Math.floor(Math.random() * goalsB); 
     }
     
-    return [goalsA, goalsB];
+    return [goalsA, goalsB, generateStatsForTeam(teamA), generateStatsForTeam(teamB)];
 }
 
 function renderLeagueStatus() {
@@ -1542,6 +1715,9 @@ function getPlayerRankingTableHtml(sortedTeams) {
 }
 
 function renderLeagueSimulator(key) {
+    state.currentScreen = 'leagueSimulator';
+    state.currentMode = key;
+    saveState();
     const league = leagueData[key];
     if (!league) {
         app.innerHTML = `<section class="card"><p>Esse campeonato ainda nao esta disponivel.</p></section>`;
@@ -1549,21 +1725,23 @@ function renderLeagueSimulator(key) {
     }
     state.leagueKey = key;
 
-    if (!state.leagueTeams || state.leagueKey !== key) {
-        state.leagueTeams = createChampionshipTeams(league.teams);
-        state.leagueTeams.forEach((t, i) => t.id = `league-${key}-${i}`);
-    } else {
-        state.leagueTeams.forEach(t => {
-            t.played = 0; t.wins = 0; t.draws = 0; t.losses = 0;
-            t.goalsFor = 0; t.goalsAgainst = 0; t.points = 0;
-        });
+    if (!state.leagueTeams || state.leagueKey !== key || !state.schedule) {
+        if (!state.leagueTeams || state.leagueKey !== key) {
+            state.leagueTeams = createChampionshipTeams(league.teams);
+            state.leagueTeams.forEach((t, i) => t.id = `league-${key}-${i}`);
+        } else {
+            state.leagueTeams.forEach(t => {
+                t.played = 0; t.wins = 0; t.draws = 0; t.losses = 0;
+                t.goalsFor = 0; t.goalsAgainst = 0; t.points = 0;
+            });
+        }
+        state.schedule = buildSchedule(state.leagueTeams);
+        state.currentRound = 0;
+        state.leaguePointsAwarded = false;
+        state.lastAwardedPoints = {};
+        state.isScoresPanelOpen = false;
+        saveState(); // Save the newly generated schedule
     }
-
-    state.schedule = buildSchedule(state.leagueTeams);
-    state.currentRound = 0;
-    state.leaguePointsAwarded = false;
-    state.lastAwardedPoints = {};
-    state.isScoresPanelOpen = false;
 
     app.innerHTML = `
         <section class="card">
@@ -1864,17 +2042,23 @@ function startTournamentGroupStage(mode) {
     for (let index = 0; index < groupCount; index += 1) {
         groups.push({
             name: groupCount > 26 ? String(index + 1) : String.fromCharCode(65 + index),
-            teams: shuffled.slice(index * teamsPerGroup, index * teamsPerGroup + teamsPerGroup).map(team => ({
-                ...team,
-                strength: getEffectiveStrength(team),
-                played: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0,
-                goalsFor: 0,
-                goalsAgainst: 0,
-                points: 0
-            }))
+            teams: shuffled.slice(index * teamsPerGroup, index * teamsPerGroup + teamsPerGroup).map(team => {
+                team.strength = getEffectiveStrength(team);
+                team.played = 0;
+                team.wins = 0;
+                team.draws = 0;
+                team.losses = 0;
+                team.goalsFor = 0;
+                team.goalsAgainst = 0;
+                team.points = 0;
+                team.yellows = 0;
+                team.reds = 0;
+                team.fouls = 0;
+                team.shots = 0;
+                team.penaltiesScored = 0;
+                team.penaltiesMissed = 0;
+                return team;
+            })
         });
     }
 
@@ -1931,6 +2115,9 @@ function startTournamentGroupStage(mode) {
 }
 
 function renderTournamentGroupStage(mode) {
+    state.currentScreen = 'tournamentGroupStage';
+    state.currentMode = mode;
+    saveState();
     const tournament = state[mode];
     const groupsHtml = tournament.groups.map(group => {
         const rows = getGroupStandings(group).map(team => `
@@ -2131,8 +2318,8 @@ function advanceTournamentGroupRound(mode) {
             const [goalsA, goalsB, statsA, statsB] = getTournamentGoals(match.teamA, match.teamB); 
             match.goalsA = goalsA;
             match.goalsB = goalsB;
-            updateTeamStats(match.teamA, goalsA, goalsB);
-            updateTeamStats(match.teamB, goalsB, goalsA);
+            updateTeamStats(match.teamA, goalsA, goalsB, statsA);
+            updateTeamStats(match.teamB, goalsB, goalsA, statsB);
             tournament.groupHistory.unshift({
                 group: group.name,
                 round: `R${currentRound + 1}`,
@@ -2172,6 +2359,9 @@ function createKnockoutStage(stage, teams) {
 }
 
 function renderTournamentKnockout(mode) {
+    state.currentScreen = 'tournamentKnockout';
+    state.currentMode = mode;
+    saveState();
     const tournament = state[mode];
     if (!tournament.knockout) {
         return renderMainScreen();
@@ -2316,11 +2506,11 @@ function simulateKnockoutStage(mode) {
     }
 
     knockout.matches.forEach(match => {
-        const [goalsA, goalsB] = getTournamentGoals(match.teamA, match.teamB); 
+        const [goalsA, goalsB, statsA, statsB] = getTournamentGoals(match.teamA, match.teamB); 
         match.goalsA = goalsA;
         match.goalsB = goalsB;
-        updateTeamStats(match.teamA, goalsA, goalsB);
-        updateTeamStats(match.teamB, goalsB, goalsA);
+        updateTeamStats(match.teamA, goalsA, goalsB, statsA);
+        updateTeamStats(match.teamB, goalsB, goalsA, statsB);
         if (goalsA !== goalsB) {
             match.winner = goalsA > goalsB ? match.teamA : match.teamB;
         } else {
@@ -2749,6 +2939,9 @@ function renderLiveMatchStatsPanel(match, mode) {
 }
 
 function renderLiveKnockoutStage(mode) {
+    state.currentScreen = 'liveKnockoutStage';
+    state.currentMode = mode;
+    saveState();
     const tournament = state[mode];
     const { stage, matches } = tournament.knockout;
     let title = 'Fase Final';
@@ -3080,12 +3273,24 @@ function updateLiveDOM(mode) {
 
     const leagueStatsContainer = document.getElementById('leagueStatsTabsContainer');
     if (leagueStatsContainer) {
-        leagueStatsContainer.innerHTML = renderTournamentStats(mode, true);
+        const thead = leagueStatsContainer.querySelector('thead');
+        const tbody = leagueStatsContainer.querySelector('tbody');
+        if (thead && tbody) {
+            const content = getTournamentStatsTableContent(mode, true);
+            thead.innerHTML = content.thead;
+            tbody.innerHTML = content.tbody;
+        }
     } else {
         const mainStatsPanel = document.getElementById('tournament-stats-panel');
         if (mainStatsPanel) {
             const isExpanded = mainStatsPanel.querySelector('th') && (mainStatsPanel.querySelector('th').innerText.includes('Saldo') || mainStatsPanel.querySelector('th').innerText.includes('PTS'));
-            mainStatsPanel.outerHTML = renderTournamentStats(mode, isExpanded);
+            const thead = mainStatsPanel.querySelector('thead');
+            const tbody = mainStatsPanel.querySelector('tbody');
+            if (thead && tbody) {
+                const content = getTournamentStatsTableContent(mode, isExpanded);
+                thead.innerHTML = content.thead;
+                tbody.innerHTML = content.tbody;
+            }
         }
     }
 }
@@ -3275,6 +3480,9 @@ function renderPenaltyInterface(match, mode = match._mode) {
 }
 
 function renderChampionScreen(mode) {
+    state.currentScreen = 'championScreen';
+    state.currentMode = mode;
+    saveState();
     const tournament = state[mode];
     
     let semiFinalistsHtml = '';
@@ -3476,8 +3684,33 @@ function renderHowToPlay() {
 }
 
 function initApp() {
-    StorageManager.saveLeagues();
-    renderMainScreen();
+    try {
+        StorageManager.saveLeagues();
+        if (loadState()) {
+            // Auto-repair corrupted screen states from previous bug
+            if (state.currentScreen === 'leagueStandings' || state.currentScreen === 'leagueStatus') {
+                state.currentScreen = 'leagueSimulator';
+                saveState();
+            }
+            
+            if (state.currentScreen === 'tournamentSelection') return renderTournamentSelection(state.currentMode);
+            if (state.currentScreen === 'tournamentGroupStage') return renderTournamentGroupStage(state.currentMode);
+            if (state.currentScreen === 'tournamentKnockout') return renderTournamentKnockout(state.currentMode);
+            if (state.currentScreen === 'liveKnockoutStage') return renderLiveKnockoutStage(state.currentMode);
+            if (state.currentScreen === 'leagueAssignment') return renderLeagueAssignment(state.currentMode);
+            if (state.currentScreen === 'leagueSimulator') {
+                return renderLeagueSimulator(state.currentMode);
+            }
+            if (state.currentScreen === 'championScreen') return renderChampionScreen(state.currentMode);
+        }
+        renderMainScreen();
+    } catch (e) {
+        console.error(e);
+        const app = document.getElementById('app');
+        if (app) {
+            app.innerHTML = `<div style="color:white; background:red; padding:20px; text-align:left; overflow:auto;"><h2 style="color:white;">Erro Inesperado</h2><pre>${e.stack}</pre></div>`;
+        }
+    }
 }
 
 if (document.readyState === 'loading') {
@@ -3552,9 +3785,12 @@ function renderMultiplayerSidebar(mode) {
             <div class="sidebar-player-row${isActive}" data-select-player="${p}">
                 <div class="player-info">
                     <div class="player-color-dot" style="background: ${playerColor}"></div>
-                    <span>Player ${p}</span>
+                    <span class="player-name-full">Player ${p}</span>
                 </div>
-                <div class="player-count">${count} times</div>
+                <div class="player-count">
+                    <span class="count-full">${count} times</span>
+                    <span class="count-short" style="display:none;">- ${count}</span>
+                </div>
             </div>
         `;
     }

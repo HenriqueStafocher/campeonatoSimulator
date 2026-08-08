@@ -163,7 +163,7 @@ button.success:hover {
 }
 
 /* ======================================================== 
-   ESTILOS PARA OS BOTÕES DO MENU PRINCIPAL (LIGAS) 
+   ESTILOS PARA OS BOTÃ•ES DO MENU PRINCIPAL (LIGAS) 
    ======================================================== */
 .league-btn {
     width: 100%;
@@ -329,7 +329,7 @@ button.success:hover {
 }
 
 .team-card input:checked + .custom-checkbox::after {
-    content: '✓';
+    content: 'âœ“';
     font-size: 12px;
     color: white;
     font-weight: 700;
@@ -822,7 +822,7 @@ table.stats-table tr + tr td {
 }
 
 /* ======================================================== 
-   NOVO: Botões Externos (Discord e Feedback)
+   NOVO: BotÃµes Externos (Discord e Feedback)
    ======================================================== */
 .top-external-links {
     position: absolute;
@@ -907,7 +907,7 @@ table.stats-table tr + tr td {
 }
 
 /* ======================================================== 
-   NOVO: Ajustes de Botões de Cabeçalho
+   NOVO: Ajustes de BotÃµes de CabeÃ§alho
    ======================================================== */
 .header-action-buttons {
     display: flex;
@@ -948,7 +948,7 @@ table.stats-table tr + tr td {
 }
 
 /* ======================================================== 
-   PAINEL DE ESTATÍSTICAS E PROBABILIDADE DE VITÓRIA
+   PAINEL DE ESTATÃSTICAS E PROBABILIDADE DE VITÃ“RIA
    ======================================================== */
 .btn-stats, .btn-action {
     background: linear-gradient(135deg, #48cae4, #0096c7) !important;
@@ -1058,7 +1058,7 @@ table.stats-table tr + tr td {
     font-size: 0.92rem;
 }
 
-/* Seção de Probabilidade de Vitória */
+/* SeÃ§Ã£o de Probabilidade de VitÃ³ria */
 .win-prob-section {
     margin-top: 24px;
     padding-top: 18px;
@@ -1136,7 +1136,7 @@ table.stats-table tr + tr td {
     border-radius: 4px;
 }
 
-/* Breakpoint para Dispositivos Móveis (<= 600px) */
+/* Breakpoint para Dispositivos MÃ³veis (<= 600px) */
 @media (max-width: 600px) {
     body {
         padding: 0 8px 16px;
@@ -1326,7 +1326,7 @@ table.stats-table tr + tr td {
 }
 
 /* ======================================================== 
-   NOVO: Configuração de Campeonatos e Players
+   NOVO: ConfiguraÃ§Ã£o de Campeonatos e Players
    ======================================================== */
 .wizard-options {
     display: grid;
@@ -1522,7 +1522,7 @@ table.stats-table tr + tr td {
     text-shadow: 0 0 5px rgba(255, 51, 51, 0.5);
 }
 
-/* Botão de Ocultar/Mostrar */
+/* BotÃ£o de Ocultar/Mostrar */
 .btn-toggle-panel {
     background: transparent;
     color: var(--muted);
@@ -1717,7 +1717,7 @@ table.stats-table tr + tr td {
     text-shadow: 0 0 5px rgba(255, 51, 51, 0.5);
 }
 
-/* Botão de Ocultar/Mostrar */
+/* BotÃ£o de Ocultar/Mostrar */
 .btn-toggle-panel {
     background: transparent;
     color: var(--muted);
@@ -1903,7 +1903,7 @@ table.stats-table tr + tr td {
 }
 
  / *   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-       N O V O :   E s t i l o s   d o   H i s t � r i c o   d e   J o g o s   ( M a t c h   H i s t o r y ) 
+       N O V O :   E s t i l o s   d o   H i s t ó r i c o   d e   J o g o s   ( M a t c h   H i s t o r y ) 
        = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   * / 
  . s e m i f i n a l i s t s - g r i d   { 
          d i s p l a y :   g r i d ; 
@@ -2034,12 +2034,180 @@ table.stats-table tr + tr td {
          f l e x :   1 ; 
          t e x t - a l i g n :   c e n t e r ; 
          f o n t - s i z e :   0 . 9 r e m ; 
-         o p a c i t y :   0 . 8 ; 
- } 
- . h i s t o r y - s c o r e l i n e   s p a n . h i g h l i g h t - t e a m   { 
-         f o n t - w e i g h t :   b o l d ; 
-         c o l o r :   # f f f ; 
-         o p a c i t y :   1 ; 
- } 
-  
- 
+}
+
+ / *   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+       N O V O :   E s t i l o s   d o   H i s t ó r i c o   d e   J o g o s   ( M a t c h   H i s t o r y ) 
+       = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   * / 
+ . s e m i f i n a l i s t s - g r i d   { 
+         d i s p l a y :   g r i d ; 
+         g r i d - t e m p l a t e - c o l u m n s :   r e p e a t ( a u t o - f i t ,   m i n m a x ( 2 0 0 p x ,   1 f r ) ) ; 
+         g a p :   1 5 p x ; 
+         m a r g i n - t o p :   1 5 p x ; 
+ } 
+ . s e m i f i n a l i s t - c a r d   { 
+         b a c k g r o u n d :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 0 5 ) ; 
+         b o r d e r - r a d i u s :   1 6 p x ; 
+         p a d d i n g :   1 5 p x ; 
+         d i s p l a y :   f l e x ; 
+         f l e x - d i r e c t i o n :   c o l u m n ; 
+         a l i g n - i t e m s :   c e n t e r ; 
+         b o r d e r :   1 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
+         b a c k d r o p - f i l t e r :   b l u r ( 8 p x ) ; 
+         t r a n s i t i o n :   t r a n s f o r m   0 . 2 s ; 
+ } 
+ . s e m i f i n a l i s t - c a r d : h o v e r   { 
+         t r a n s f o r m :   t r a n s l a t e Y ( - 4 p x ) ; 
+         b a c k g r o u n d :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 0 8 ) ; 
+ } 
+ . v i e w - h i s t o r y - b t n   { 
+         b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 1 3 5 d e g ,   # 6 c 5 c e 7 ,   # a 2 9 b f e ) ; 
+         c o l o r :   # f f f ; 
+         b o r d e r :   n o n e ; 
+         b o r d e r - r a d i u s :   8 p x ; 
+         p a d d i n g :   8 p x   1 2 p x ; 
+         f o n t - w e i g h t :   b o l d ; 
+         c u r s o r :   p o i n t e r ; 
+         t r a n s i t i o n :   a l l   0 . 3 s   e a s e ; 
+         t e x t - t r a n s f o r m :   u p p e r c a s e ; 
+         f o n t - s i z e :   0 . 8 r e m ; 
+         b o x - s h a d o w :   0   4 p x   1 5 p x   r g b a ( 1 0 8 ,   9 2 ,   2 3 1 ,   0 . 3 ) ; 
+ } 
+ . v i e w - h i s t o r y - b t n : h o v e r   { 
+         b a c k g r o u n d :   l i n e a r - g r a d i e n t ( 1 3 5 d e g ,   # a 2 9 b f e ,   # 6 c 5 c e 7 ) ; 
+         b o x - s h a d o w :   0   6 p x   2 0 p x   r g b a ( 1 0 8 ,   9 2 ,   2 3 1 ,   0 . 5 ) ; 
+         t r a n s f o r m :   s c a l e ( 1 . 0 5 ) ; 
+ } 
+ . h i s t o r y - m o d a l   { 
+         p o s i t i o n :   f i x e d ; 
+         t o p :   0 ;   l e f t :   0 ;   w i d t h :   1 0 0 % ;   h e i g h t :   1 0 0 % ; 
+         b a c k g r o u n d :   r g b a ( 0 ,   0 ,   0 ,   0 . 8 ) ; 
+         d i s p l a y :   f l e x ; 
+         a l i g n - i t e m s :   c e n t e r ; 
+         j u s t i f y - c o n t e n t :   c e n t e r ; 
+         z - i n d e x :   9 9 9 9 ; 
+         b a c k d r o p - f i l t e r :   b l u r ( 5 p x ) ; 
+         a n i m a t i o n :   f a d e I n   0 . 3 s   e a s e ; 
+ } 
+ . h i s t o r y - m o d a l - i n n e r   { 
+         b a c k g r o u n d :   v a r ( - - s u r f a c e ) ; 
+         b o r d e r :   1 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
+         b o r d e r - r a d i u s :   2 0 p x ; 
+         w i d t h :   9 0 % ; 
+         m a x - w i d t h :   6 0 0 p x ; 
+         m a x - h e i g h t :   8 5 v h ; 
+         o v e r f l o w - y :   a u t o ; 
+         p a d d i n g :   2 5 p x ; 
+         p o s i t i o n :   r e l a t i v e ; 
+         b o x - s h a d o w :   0   2 0 p x   5 0 p x   r g b a ( 0 , 0 , 0 , 0 . 5 ) ; 
+ } 
+ . h i s t o r y - h e a d e r   { 
+         t e x t - a l i g n :   c e n t e r ; 
+         m a r g i n - b o t t o m :   2 0 p x ; 
+         b o r d e r - b o t t o m :   1 p x   s o l i d   r g b a ( 2 5 5 , 2 5 5 , 2 5 5 , 0 . 1 ) ; 
+         p a d d i n g - b o t t o m :   1 5 p x ; 
+ } 
+ . h i s t o r y - h e a d e r   h 3   { 
+         m a r g i n :   1 0 p x   0   0   0 ; 
+         c o l o r :   v a r ( - - p r i m a r y ) ; 
+         f o n t - s i z e :   1 . 5 r e m ; 
+ } 
+ . h i s t o r y - c l a s s i f i c a t i o n   { 
+         f o n t - s i z e :   0 . 9 5 r e m ; 
+         c o l o r :   v a r ( - - t e x t - m u t e d ) ; 
+         m a r g i n - b o t t o m :   1 5 p x ; 
+         t e x t - a l i g n :   c e n t e r ; 
+ } 
+ . h i s t o r y - c l a s s i f i c a t i o n   s t r o n g   { 
+         c o l o r :   # f f d 7 0 0 ; 
+ } 
+ . h i s t o r y - m a t c h - l i s t   { 
+         l i s t - s t y l e :   n o n e ; 
+         p a d d i n g :   0 ; 
+         m a r g i n :   0   0   2 5 p x   0 ; 
+ } 
+ . h i s t o r y - m a t c h - l i s t   l i   { 
+         b a c k g r o u n d :   r g b a ( 0 , 0 , 0 , 0 . 2 ) ; 
+         b o r d e r - r a d i u s :   1 2 p x ; 
+         p a d d i n g :   1 2 p x   1 5 p x ; 
+         m a r g i n - b o t t o m :   1 0 p x ; 
+         d i s p l a y :   f l e x ; 
+         f l e x - d i r e c t i o n :   c o l u m n ; 
+         b o r d e r - l e f t :   5 p x   s o l i d   # 5 5 5 ; 
+         t r a n s i t i o n :   t r a n s f o r m   0 . 2 s ; 
+ } 
+ . h i s t o r y - m a t c h - l i s t   l i : h o v e r   { 
+         t r a n s f o r m :   t r a n s l a t e X ( 5 p x ) ; 
+         b a c k g r o u n d :   r g b a ( 2 5 5 , 2 5 5 , 2 5 5 , 0 . 0 5 ) ; 
+ } 
+ . h i s t o r y - m a t c h - l i s t   l i . m a t c h - w i n   {   b o r d e r - l e f t - c o l o r :   # 0 0 b 8 9 4 ;   } 
+ . h i s t o r y - m a t c h - l i s t   l i . m a t c h - d r a w   {   b o r d e r - l e f t - c o l o r :   # f d c b 6 e ;   } 
+ . h i s t o r y - m a t c h - l i s t   l i . m a t c h - l o s s   {   b o r d e r - l e f t - c o l o r :   # f f 7 6 7 5 ;   } 
+ 
+ . h i s t o r y - r o u n d   { 
+         f o n t - s i z e :   0 . 7 5 r e m ; 
+         c o l o r :   v a r ( - - t e x t - m u t e d ) ; 
+         t e x t - t r a n s f o r m :   u p p e r c a s e ; 
+         l e t t e r - s p a c i n g :   1 p x ; 
+         m a r g i n - b o t t o m :   5 p x ; 
+ } 
+ . h i s t o r y - s c o r e l i n e   { 
+         d i s p l a y :   f l e x ; 
+         j u s t i f y - c o n t e n t :   s p a c e - b e t w e e n ; 
+         a l i g n - i t e m s :   c e n t e r ; 
+         f o n t - s i z e :   1 . 1 r e m ; 
+ } 
+ . h i s t o r y - s c o r e l i n e   s t r o n g   { 
+         b a c k g r o u n d :   r g b a ( 0 , 0 , 0 , 0 . 3 ) ; 
+         p a d d i n g :   3 p x   1 0 p x ; 
+         b o r d e r - r a d i u s :   6 p x ; 
+         f o n t - f a m i l y :   m o n o s p a c e ; 
+         f o n t - s i z e :   1 . 2 r e m ; 
+ } 
+ . h i s t o r y - s c o r e l i n e   s p a n   { 
+         f l e x :   1 ; 
+         t e x t - a l i g n :   c e n t e r ; 
+         f o n t - s i z e :   0 . 9 r e m ; 
+         o p a c i t y :   0 . 8 ; 
+ } 
+ . h i s t o r y - s c o r e l i n e   s p a n . h i g h l i g h t - t e a m   { 
+         f o n t - w e i g h t :   b o l d ; 
+         c o l o r :   # f f f ; 
+         o p a c i t y :   1 ; 
+ } 
+  
+ @media (max-width: 768px) {
+    .multiplayer-sidebar {
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: auto;
+        padding: 8px 6px;
+        z-index: 1000;
+        margin-bottom: 0;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+        border-radius: 8px 0 0 8px;
+    }
+    .multiplayer-sidebar h3 {
+        display: none;
+    }
+    .multiplayer-sidebar .sidebar-player-row {
+        padding: 6px 4px;
+        gap: 6px;
+        justify-content: flex-start;
+        align-items: center;
+        flex-direction: row;
+    }
+    .player-name-full, .count-full {
+        display: none !important;
+    }
+    .count-short {
+        display: inline-block !important;
+        font-size: 0.95rem;
+        font-weight: bold;
+    }
+    .multiplayer-sidebar .player-info {
+        gap: 0;
+    }
+}
